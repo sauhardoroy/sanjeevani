@@ -81,7 +81,11 @@ export function Home({
                     Critical Refill
                   </h2>
                 </div>
-                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#E5E5EA] text-[#1C1C1E]">
+                <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
+                  criticalMeds.length > 0 
+                    ? 'bg-[#FF3B30]/10 text-[#D32F2F] border border-[#FF3B30]/20' 
+                    : 'bg-[#E5E5EA] text-[#8E8E93]'
+                }`}>
                   {criticalMeds.length}
                 </span>
               </div>
@@ -99,8 +103,8 @@ export function Home({
                   ))}
                 </div>
               ) : (
-                <div className="py-2.5 px-4 rounded-2xl bg-white/60 border border-[#E5E5EA] text-[12px] font-medium text-[#8E8E93] flex items-center justify-center gap-2">
-                  <Check size={13} className="text-[#8E8E93] stroke-[2.5]" />
+                <div className="py-2.5 px-4 rounded-2xl bg-white/70 border border-[#E5E5EA] text-[12px] font-medium text-[#8E8E93] flex items-center justify-center gap-2">
+                  <Check size={13} className="text-[#34C759] stroke-[2.5]" />
                   <span>No critical refills needed</span>
                 </div>
               )}
@@ -117,7 +121,11 @@ export function Home({
                     Attention Required
                   </h2>
                 </div>
-                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#E5E5EA] text-[#1C1C1E]">
+                <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
+                  attentionMeds.length > 0 
+                    ? 'bg-[#FF9F0A]/10 text-[#B45309] border border-[#FF9F0A]/20' 
+                    : 'bg-[#E5E5EA] text-[#8E8E93]'
+                }`}>
                   {attentionMeds.length}
                 </span>
               </div>
@@ -135,8 +143,8 @@ export function Home({
                   ))}
                 </div>
               ) : (
-                <div className="py-2.5 px-4 rounded-2xl bg-white/60 border border-[#E5E5EA] text-[12px] font-medium text-[#8E8E93] flex items-center justify-center gap-2">
-                  <Check size={13} className="text-[#8E8E93] stroke-[2.5]" />
+                <div className="py-2.5 px-4 rounded-2xl bg-white/70 border border-[#E5E5EA] text-[12px] font-medium text-[#8E8E93] flex items-center justify-center gap-2">
+                  <Check size={13} className="text-[#34C759] stroke-[2.5]" />
                   <span>No strips in early discard risk</span>
                 </div>
               )}
@@ -153,7 +161,11 @@ export function Home({
                     All Good
                   </h2>
                 </div>
-                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#E5E5EA] text-[#1C1C1E]">
+                <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
+                  allGoodMeds.length > 0 
+                    ? 'bg-[#34C759]/10 text-[#15803D] border border-[#34C759]/20' 
+                    : 'bg-[#E5E5EA] text-[#8E8E93]'
+                }`}>
                   {allGoodMeds.length}
                 </span>
               </div>
@@ -171,7 +183,7 @@ export function Home({
                   ))}
                 </div>
               ) : (
-                <div className="py-2.5 px-4 rounded-2xl bg-white/60 border border-[#E5E5EA] text-[12px] font-medium text-[#8E8E93] flex items-center justify-center gap-2">
+                <div className="py-2.5 px-4 rounded-2xl bg-white/70 border border-[#E5E5EA] text-[12px] font-medium text-[#8E8E93] flex items-center justify-center gap-2">
                   <span>No medicines currently in safe supply</span>
                 </div>
               )}

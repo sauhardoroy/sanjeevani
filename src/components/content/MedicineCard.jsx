@@ -33,35 +33,59 @@ const SPRING = {
 
 const TOUCH_SPRING = {
   type: 'spring',
-  stiffness: 460,
-  damping: 24,
-  mass: 0.6,
+  stiffness: 480,
+  damping: 22,
+  mass: 0.5,
 };
 
 // -----------------------------------------------------------------------------
-// Status configuration (Apple Restrained Palette)
+// Status Gradients (Darker at top, merging to white at bottom)
 // -----------------------------------------------------------------------------
 
-const STATUS_UI = {
-  SAFE: {
-    label: 'On Track',
-    dotColor: 'bg-[#34C759]',
-    icon: ShieldCheck,
-  },
-  LOW_STOCK: {
-    label: 'Running Low',
-    dotColor: 'bg-[#FF9F0A]',
-    icon: AlertCircle,
+const STATUS_THEME = {
+  REFILL_NOW: {
+    label: 'Refill Needed',
+    dotColor: 'bg-[#FF3B30]',
+    cardGradient: 'bg-gradient-to-b from-[#FFEBEB] via-[#FFF6F6] to-white',
+    cardBorder: 'border-[#FF3B30]/35',
+    cardShadow: 'shadow-[0_8px_30px_rgba(255,59,48,0.08),0_1px_3px_rgba(0,0,0,0.02)]',
+    iconBg: 'bg-[#FF3B30]/12 text-[#FF3B30]',
+    badgeBg: 'bg-[#FF3B30]/10 text-[#D32F2F] border border-[#FF3B30]/25',
+    bannerBg: 'bg-[#FFF0F0] border border-[#FF3B30]/25 text-[#991B1B]',
+    activeBoxHighlight: 'bg-[#FFF0F0] border border-[#FF3B30]/25 text-[#991B1B]',
   },
   ABANDONMENT_RISK: {
     label: 'Check Active Strip',
     dotColor: 'bg-[#FF9F0A]',
-    icon: AlertCircle,
+    cardGradient: 'bg-gradient-to-b from-[#FFF2D6] via-[#FFF9ED] to-white',
+    cardBorder: 'border-[#FF9F0A]/35',
+    cardShadow: 'shadow-[0_8px_30px_rgba(255,159,10,0.08),0_1px_3px_rgba(0,0,0,0.02)]',
+    iconBg: 'bg-[#FF9F0A]/15 text-[#D97706]',
+    badgeBg: 'bg-[#FF9F0A]/10 text-[#B45309] border border-[#FF9F0A]/25',
+    bannerBg: 'bg-[#FFF9EB] border border-[#FF9F0A]/30 text-[#92400E]',
+    activeBoxHighlight: 'bg-[#FFF8EB] border border-[#FF9F0A]/30 text-[#92400E]',
   },
-  REFILL_NOW: {
-    label: 'Refill Needed',
-    dotColor: 'bg-[#FF3B30]',
-    icon: AlertCircle,
+  LOW_STOCK: {
+    label: 'Running Low',
+    dotColor: 'bg-[#FF9F0A]',
+    cardGradient: 'bg-gradient-to-b from-[#FFF2D6] via-[#FFF9ED] to-white',
+    cardBorder: 'border-[#FF9F0A]/35',
+    cardShadow: 'shadow-[0_8px_30px_rgba(255,159,10,0.08),0_1px_3px_rgba(0,0,0,0.02)]',
+    iconBg: 'bg-[#FF9F0A]/15 text-[#D97706]',
+    badgeBg: 'bg-[#FF9F0A]/10 text-[#B45309] border border-[#FF9F0A]/25',
+    bannerBg: 'bg-[#FFF9EB] border border-[#FF9F0A]/30 text-[#92400E]',
+    activeBoxHighlight: 'bg-[#FFF8EB] border border-[#FF9F0A]/30 text-[#92400E]',
+  },
+  SAFE: {
+    label: 'On Track',
+    dotColor: 'bg-[#34C759]',
+    cardGradient: 'bg-gradient-to-b from-[#E8F8ED] via-[#F3FBF6] to-white',
+    cardBorder: 'border-[#34C759]/35',
+    cardShadow: 'shadow-[0_8px_30px_rgba(52,199,89,0.08),0_1px_3px_rgba(0,0,0,0.02)]',
+    iconBg: 'bg-[#34C759]/15 text-[#15803D]',
+    badgeBg: 'bg-[#34C759]/10 text-[#15803D] border border-[#34C759]/25',
+    bannerBg: 'bg-[#F0FDF4] border border-[#34C759]/25 text-[#166534]',
+    activeBoxHighlight: 'bg-[#F0FDF4] border border-[#34C759]/25 text-[#166534]',
   },
 };
 
@@ -76,7 +100,7 @@ function formatCount(value) {
 }
 
 // -----------------------------------------------------------------------------
-// Main Component (Apple Inset Grouped Mobile Architecture)
+// Main Component
 // -----------------------------------------------------------------------------
 
 export function MedicineCard({
@@ -98,7 +122,7 @@ export function MedicineCard({
     return null;
   }
 
-  const statusConfig = STATUS_UI[status.type] || STATUS_UI.SAFE;
+  const theme = STATUS_THEME[status.type] || STATUS_THEME.SAFE;
 
   const tabletsPerStrip =
     Number(medicine.stripConfig?.tabletsPerStrip) ||
@@ -183,23 +207,24 @@ export function MedicineCard({
     <motion.article
       layout
       transition={SPRING}
-      className="
+      className={`
         overflow-hidden rounded-[26px]
-        border border-[#E5E5EA] bg-white
-        shadow-[0_4px_24px_rgba(0,0,0,0.04),0_1px_3px_rgba(0,0,0,0.02)]
-        transition-shadow
-      "
+        border ${theme.cardBorder}
+        ${theme.cardGradient}
+        ${theme.cardShadow}
+        transition-all duration-300
+      `}
     >
       {/* ------------------------------------------------------------------ */}
-      {/* Front Card Header (Name, Status Badge, Short Message) */}
+      {/* Outer Card Header (Tinted at top, merges to white at bottom) */}
       {/* ------------------------------------------------------------------ */}
 
       <div className="p-4 sm:p-5 flex flex-col gap-3">
-        {/* Top Row: Icon + Name + Status Pill */}
+        {/* Top Row: Squircle Pill Icon + Name + Status Pill */}
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#F2F2F7] text-[#1C1C1E] shadow-xs">
-              <Pill size={19} strokeWidth={2} />
+            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${theme.iconBg} shadow-xs`}>
+              <Pill size={19} strokeWidth={2.2} />
             </div>
 
             <h3 className="truncate text-[17px] font-bold tracking-tight text-[#1C1C1E]">
@@ -207,28 +232,28 @@ export function MedicineCard({
             </h3>
           </div>
 
-          {/* Minimalist Apple Status Pill */}
-          <div className="flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 bg-[#F8F9FB] border border-[#E5E5EA] text-[#1C1C1E] text-xs font-semibold shadow-xs">
-            <span className={`w-2 h-2 rounded-full ${statusConfig.dotColor}`} />
-            <span>{statusConfig.label}</span>
+          {/* Frosted Apple Status Pill */}
+          <div className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 ${theme.badgeBg} text-xs font-bold shadow-xs`}>
+            <span className={`w-2 h-2 rounded-full ${theme.dotColor}`} />
+            <span>{theme.label}</span>
           </div>
         </div>
 
-        {/* Short Message Banner */}
+        {/* Short Message Banner with Status Tint */}
         {status.warningLine ? (
-          <div className="rounded-xl bg-[#F8F9FB] border border-[#E5E5EA] px-3.5 py-2 text-[12px] text-[#1C1C1E] font-medium leading-snug flex items-center gap-2">
+          <div className={`rounded-xl ${theme.bannerBg} px-3.5 py-2 text-[12px] font-medium leading-snug flex items-center gap-2 shadow-2xs`}>
             <AlertCircle size={15} className={`shrink-0 ${critical ? 'text-[#FF3B30]' : 'text-[#FF9F0A]'}`} />
             <span>{status.warningLine}</span>
           </div>
         ) : (
-          <div className="rounded-xl bg-[#F8F9FB] border border-[#E5E5EA] px-3.5 py-2 text-[12px] text-[#1C1C1E] font-medium leading-snug flex items-center gap-2">
+          <div className={`rounded-xl ${theme.bannerBg} px-3.5 py-2 text-[12px] font-medium leading-snug flex items-center gap-2 shadow-2xs`}>
             <Check size={15} className="shrink-0 text-[#34C759] stroke-[2.5]" />
             <span>Safe supply on track: <strong>{safeDays} days</strong> remaining.</span>
           </div>
         )}
 
-        {/* Action Row: WhatsApp & Single Unified Expand Toggle */}
-        <div className="pt-1.5 border-t border-[#F2F2F7] flex items-center justify-between gap-2">
+        {/* Action Row: WhatsApp & Single Unified Expand Toggle (White surface) */}
+        <div className="pt-1.5 border-t border-[#E5E5EA]/70 flex items-center justify-between gap-2">
           {/* WhatsApp Pill */}
           <motion.button
             whileTap={{ scale: 0.94, y: 1 }}
@@ -278,7 +303,7 @@ export function MedicineCard({
       </div>
 
       {/* ------------------------------------------------------------------ */}
-      {/* Clean, Visible Dropdown (Multi-Strip Visualization & Reconciliation) */}
+      {/* Expansion Menu: Professional, Minimalist, Black & White Drawer */}
       {/* ------------------------------------------------------------------ */}
 
       <AnimatePresence initial={false}>
@@ -293,50 +318,54 @@ export function MedicineCard({
           >
             <div className="p-4 sm:p-5 flex flex-col gap-3">
               
-              {/* 1. Apple Health 3-Column Metric Pod */}
-              <div className="rounded-2xl border border-[#E5E5EA] bg-white p-3.5 shadow-xs">
-                <div className="grid grid-cols-3 divide-x divide-[#E5E5EA] text-center">
-                  <div className="px-2">
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-[#8E8E93] block">
-                      {hasMultipleOpen ? 'In Open Strips' : 'Active Strip'}
+              {/* 1. Metric Summary Pod with Subtle Active Strip Highlight */}
+              <div className="rounded-2xl border border-[#E5E5EA] bg-white p-3 shadow-xs">
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  
+                  {/* Highlighted Active Strip Box */}
+                  <div className={`p-2.5 rounded-xl ${theme.activeBoxHighlight} flex flex-col justify-center`}>
+                    <span className="text-[10px] font-bold uppercase tracking-wider block opacity-85">
+                      {hasMultipleOpen ? 'Open Strips' : 'Active Strip'}
                     </span>
-                    <span className="text-[19px] font-bold text-[#1C1C1E] tabular-nums leading-tight mt-0.5 block">
+                    <span className="text-[20px] font-bold tabular-nums leading-tight mt-0.5 block">
                       {formatCount(pillsOnActiveStrip)}
-                      <span className="text-[11px] font-normal text-[#8E8E93] ml-1">
-                        {hasMultipleOpen ? `pills (${openStrips.length} strips)` : 'pills left'}
+                      <span className="text-[11px] font-medium ml-1 opacity-80">
+                        {hasMultipleOpen ? `pills (${openStrips.length})` : 'pills'}
                       </span>
                     </span>
                   </div>
 
-                  <div className="px-2">
+                  {/* Unopened: Clean Neutral Apple Black & White */}
+                  <div className="p-2.5 rounded-xl bg-[#F8F9FB] border border-[#E5E5EA] flex flex-col justify-center">
                     <span className="text-[10px] font-semibold uppercase tracking-wider text-[#8E8E93] block">
                       Unopened
                     </span>
-                    <span className="text-[19px] font-bold text-[#1C1C1E] tabular-nums leading-tight mt-0.5 block">
+                    <span className="text-[20px] font-bold text-[#1C1C1E] tabular-nums leading-tight mt-0.5 block">
                       {fullStripsRemaining}
                       <span className="text-[11px] font-normal text-[#8E8E93] ml-1">strips</span>
                     </span>
                   </div>
 
-                  <div className="px-2">
+                  {/* Safe Supply: Clean Neutral Apple Black & White */}
+                  <div className="p-2.5 rounded-xl bg-[#F8F9FB] border border-[#E5E5EA] flex flex-col justify-center">
                     <span className="text-[10px] font-semibold uppercase tracking-wider text-[#8E8E93] block">
                       Safe Supply
                     </span>
-                    <span className="text-[19px] font-bold text-[#1C1C1E] tabular-nums leading-tight mt-0.5 block">
+                    <span className="text-[20px] font-bold text-[#1C1C1E] tabular-nums leading-tight mt-0.5 block">
                       {safeDays}
                       <span className="text-[11px] font-normal text-[#8E8E93] ml-1">days</span>
                     </span>
                   </div>
                 </div>
 
-                {/* Multi-Strip Visualizer: Renders each open strip and its tactile dots */}
-                <div className="mt-3.5 pt-3 border-t border-[#F2F2F7] flex flex-col gap-2.5">
+                {/* Tactile Blister Pack "Press-Through" Visualizer */}
+                <div className="mt-3.5 pt-3 border-t border-[#F2F2F7] flex flex-col gap-3">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-bold text-[#8E8E93] uppercase tracking-wider">
-                      {hasMultipleOpen ? 'Partially Used Strips' : 'Blister Strip'}
+                      {hasMultipleOpen ? 'Active Blister Foils in Use' : 'Active Blister Foil'}
                     </span>
-                    <span className="text-[11px] text-[#8E8E93]">
-                      {tabletsPerStrip} tabs/pack
+                    <span className="text-[11px] text-[#8E8E93] font-medium">
+                      {tabletsPerStrip} tabs / foil
                     </span>
                   </div>
 
@@ -345,13 +374,17 @@ export function MedicineCard({
                     return (
                       <div
                         key={sIdx}
-                        className="p-3 rounded-xl bg-[#F8F9FB] border border-[#E5E5EA] flex flex-col gap-2"
+                        className={`p-3 rounded-xl border flex flex-col gap-2 ${
+                          isDropZone 
+                            ? 'bg-[#FFFDF5] border-[#FF9F0A]/30' 
+                            : 'bg-[#F8F9FB] border-[#E5E5EA]'
+                        }`}
                       >
                         {/* Header: Strip info + Low indicator */}
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2">
                             <span className="text-[12px] font-bold text-[#1C1C1E]">
-                              {hasMultipleOpen ? `Strip #${sIdx + 1}` : 'Active Strip'}
+                              {hasMultipleOpen ? `Strip #${sIdx + 1}` : 'Current Strip'}
                             </span>
                             <span className="text-[11.5px] text-[#8E8E93]">
                               {stripPills} of {tabletsPerStrip} pills remaining
@@ -359,43 +392,57 @@ export function MedicineCard({
                           </div>
 
                           {isDropZone && (
-                            <span className="flex items-center gap-1 text-[10.5px] font-medium text-[#8E8E93] bg-white border border-[#E5E5EA] px-2 py-0.5 rounded-full shadow-xs">
+                            <span className="flex items-center gap-1 text-[10px] font-bold text-[#B45309] bg-[#FFF8EB] border border-[#FF9F0A]/35 px-2 py-0.5 rounded-full shadow-xs">
                               <span className="w-1.5 h-1.5 rounded-full bg-[#FF9F0A]" />
-                              <span>Low</span>
+                              <span>Drop Zone</span>
                             </span>
                           )}
                         </div>
 
-                        {/* Physical Blister Dots (Full-width foil container, wrap seamlessly without overflow) */}
-                        <div className="flex items-center gap-1.5 flex-wrap p-2 rounded-lg bg-white border border-[#E5E5EA]">
-                          {Array.from({ length: tabletsPerStrip }).map((_, pIdx) => {
-                            const filled = pIdx < stripPills;
-                            const inBuffer = pIdx < abandonmentBuffer;
-                            return (
-                              <motion.div
-                                key={pIdx}
-                                whileTap={{ scale: 0.8 }}
-                                transition={TOUCH_SPRING}
-                                className={`
-                                  h-5 w-5 rounded-full flex items-center justify-center shrink-0 select-none
-                                  ${filled
-                                    ? inBuffer && isDropZone
-                                      ? 'border border-[#FF9F0A] bg-[#FFF8EB]'
-                                      : 'border border-[#D1D1D6] bg-white shadow-xs'
-                                    : 'border border-dashed border-[#D1D1D6] bg-transparent'
-                                  }
-                                `}
-                              >
-                                {filled && (
-                                  <div
-                                    className={`h-2 w-2 rounded-full ${
-                                      inBuffer && isDropZone ? 'bg-[#FF9F0A]' : 'bg-[#1C1C1E]'
-                                    }`}
-                                  />
-                                )}
-                              </motion.div>
-                            );
-                          })}
+                        {/* Physical Blister Pack Foil Container with Metallic Sheen & Press-Through Depth */}
+                        <div className="relative overflow-hidden rounded-xl border border-[#CBD5E1] bg-gradient-to-b from-[#F8FAFC] via-[#E2E8F0] to-[#CBD5E1] p-2.5 shadow-[inset_0_1px_1.5px_rgba(255,255,255,0.9),0_2px_4px_rgba(0,0,0,0.06)]">
+                          {/* Diagonal foil sheen */}
+                          <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/25 to-transparent pointer-events-none" />
+
+                          {/* 3D Blister Pockets (Convex Filled Bubbles & Popped Cavities) */}
+                          <div className="relative z-10 flex items-center gap-2 flex-wrap">
+                            {Array.from({ length: tabletsPerStrip }).map((_, pIdx) => {
+                              const filled = pIdx < stripPills;
+                              const inBuffer = pIdx < abandonmentBuffer;
+
+                              return (
+                                <motion.div
+                                  key={pIdx}
+                                  whileTap={{ scale: 0.8, y: 1 }}
+                                  transition={TOUCH_SPRING}
+                                  className={`
+                                    h-6 w-6 rounded-full flex items-center justify-center shrink-0 select-none cursor-pointer transition-shadow
+                                    ${filled
+                                      ? inBuffer && isDropZone
+                                        ? 'bg-gradient-to-b from-white via-[#FFF8EB] to-[#FDE68A] border border-[#F59E0B]/80 shadow-[0_2px_4px_rgba(217,119,6,0.25),inset_0_1px_1.5px_rgba(255,255,255,1),inset_0_-1px_1.5px_rgba(180,83,9,0.2)]'
+                                        : 'bg-gradient-to-b from-white via-[#F8FAFC] to-[#CBD5E1] border border-[#94A3B8]/80 shadow-[0_2px_4px_rgba(0,0,0,0.18),inset_0_1px_1.5px_rgba(255,255,255,1),inset_0_-1px_1.5px_rgba(0,0,0,0.15)]'
+                                      : 'bg-gradient-to-b from-[#94A3B8]/35 to-[#CBD5E1]/50 border border-dashed border-[#94A3B8]/70 shadow-[inset_0_2px_3px_rgba(0,0,0,0.2),0_1px_1px_rgba(255,255,255,0.7)]'
+                                    }
+                                  `}
+                                  title={filled ? `Pill #${pIdx + 1} intact` : `Pill #${pIdx + 1} consumed / pressed`}
+                                >
+                                  {filled ? (
+                                    /* Physical Tablet Core */
+                                    <div
+                                      className={`h-2.5 w-2.5 rounded-full transition-transform ${
+                                        inBuffer && isDropZone
+                                          ? 'bg-gradient-to-b from-[#F59E0B] to-[#D97706] shadow-[0_0_5px_rgba(245,158,11,0.7),inset_0_1px_1px_rgba(255,255,255,0.5)]'
+                                          : 'bg-gradient-to-b from-[#334155] to-[#0F172A] shadow-[inset_0_1px_1px_rgba(255,255,255,0.4),0_1px_2px_rgba(0,0,0,0.3)]'
+                                      }`}
+                                    />
+                                  ) : (
+                                    /* Popped empty foil depression cavity */
+                                    <div className="h-1.5 w-1.5 rounded-full border border-[#94A3B8]/40 bg-black/10" />
+                                  )}
+                                </motion.div>
+                              );
+                            })}
+                          </div>
                         </div>
                       </div>
                     );
@@ -420,7 +467,7 @@ export function MedicineCard({
                           Match Physical Count
                         </h4>
                         <p className="text-[11.5px] text-[#8E8E93]">
-                          Tap pill dots to set exact pills on each strip:
+                          Tap physical blister bubbles to match your strip:
                         </p>
                       </div>
                       <button
@@ -460,32 +507,40 @@ export function MedicineCard({
                             </div>
                           </div>
 
-                          {/* Direct Tactile Blister Dots Selector */}
-                          <div className="flex items-center gap-1.5 flex-wrap p-2 rounded-lg bg-white border border-[#E5E5EA]">
-                            {Array.from({ length: tabletsPerStrip }).map((_, pIdx) => {
-                              const filled = pIdx < stripPills;
-                              return (
-                                <motion.button
-                                  key={pIdx}
-                                  type="button"
-                                  whileTap={{ scale: 0.8 }}
-                                  onClick={() =>
-                                    handleSetStripCount(
-                                      sIdx,
-                                      filled && pIdx === stripPills - 1 ? pIdx : pIdx + 1
-                                    )
-                                  }
-                                  className={`h-6 w-6 rounded-full flex items-center justify-center shrink-0 transition-all ${
-                                    filled
-                                      ? 'bg-[#1C1C1E] text-white shadow-xs'
-                                      : 'border border-dashed border-[#D1D1D6] bg-white hover:bg-slate-100'
-                                  }`}
-                                  aria-label={`Set strip ${sIdx + 1} to ${pIdx + 1} pills`}
-                                >
-                                  {filled && <div className="h-2 w-2 rounded-full bg-white" />}
-                                </motion.button>
-                              );
-                            })}
+                          {/* Metallic Tactile Selector */}
+                          <div className="relative overflow-hidden rounded-xl border border-[#CBD5E1] bg-gradient-to-b from-[#F8FAFC] via-[#E2E8F0] to-[#CBD5E1] p-2.5 shadow-inner">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {Array.from({ length: tabletsPerStrip }).map((_, pIdx) => {
+                                const filled = pIdx < stripPills;
+                                return (
+                                  <motion.button
+                                    key={pIdx}
+                                    type="button"
+                                    whileTap={{ scale: 0.75, y: 1 }}
+                                    onClick={() =>
+                                      handleSetStripCount(
+                                        sIdx,
+                                        filled && pIdx === stripPills - 1 ? pIdx : pIdx + 1
+                                      )
+                                    }
+                                    className={`
+                                      h-7 w-7 rounded-full flex items-center justify-center shrink-0 transition-transform
+                                      ${filled
+                                        ? 'bg-gradient-to-b from-white via-[#F8FAFC] to-[#CBD5E1] border border-[#94A3B8] shadow-[0_2px_4px_rgba(0,0,0,0.2),inset_0_1px_1.5px_rgba(255,255,255,1)]'
+                                        : 'bg-gradient-to-b from-[#94A3B8]/30 to-[#CBD5E1]/50 border border-dashed border-[#94A3B8]/80 shadow-inner'
+                                      }
+                                    `}
+                                    aria-label={`Set strip ${sIdx + 1} to ${pIdx + 1} pills`}
+                                  >
+                                    {filled ? (
+                                      <div className="h-3 w-3 rounded-full bg-gradient-to-b from-[#334155] to-[#0F172A] shadow-xs" />
+                                    ) : (
+                                      <div className="h-1.5 w-1.5 rounded-full bg-black/10" />
+                                    )}
+                                  </motion.button>
+                                );
+                              })}
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -498,7 +553,7 @@ export function MedicineCard({
                       onClick={handleAddStrip}
                       className="
                         flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl
-                        border border-dashed border-[#D1D1D6] bg-[#F8F9FB] text-[#1C1C1E]
+                        border border-dashed border-[#CBD5E1] bg-[#F8F9FB] text-[#1C1C1E]
                         text-[12px] font-semibold hover:bg-[#F2F2F7] transition-colors
                       "
                     >
@@ -545,7 +600,7 @@ export function MedicineCard({
                     </div>
                   </motion.div>
                 ) : (
-                  /* 3. Normal Caregiver Quick Action Buttons (Minimalist Monochrome) */
+                  /* 3. Professional, Minimalist, Black & White Action Buttons */
                   <div className="grid grid-cols-3 gap-2">
                     {/* Count Matches */}
                     <motion.button
@@ -555,13 +610,13 @@ export function MedicineCard({
                       onClick={() => handleAudit('MATCHES_EXPECTED')}
                       disabled={isAuditing}
                       className="
-                        min-h-[44px] px-2 py-2 rounded-xl
+                        min-h-[46px] px-2 py-2 rounded-xl
                         border border-[#E5E5EA] bg-white hover:bg-[#F2F2F7] active:bg-[#E5E5EA]
                         text-[#1C1C1E] text-[12px] font-semibold
                         flex flex-col items-center justify-center gap-1 shadow-xs transition-colors
                       "
                     >
-                      <CheckCircle2 size={16} className="text-[#1C1C1E] shrink-0 stroke-[2]" />
+                      <CheckCircle2 size={16} className="text-[#1C1C1E] shrink-0 stroke-[2.2]" />
                       <span>Count Matches</span>
                     </motion.button>
 
@@ -573,13 +628,13 @@ export function MedicineCard({
                       onClick={startEditing}
                       disabled={isAuditing}
                       className="
-                        min-h-[44px] px-2 py-2 rounded-xl
+                        min-h-[46px] px-2 py-2 rounded-xl
                         border border-[#E5E5EA] bg-white hover:bg-[#F2F2F7] active:bg-[#E5E5EA]
                         text-[#1C1C1E] text-[12px] font-semibold
                         flex flex-col items-center justify-center gap-1 shadow-xs transition-colors
                       "
                     >
-                      <Edit3 size={16} className="text-[#1C1C1E] shrink-0 stroke-[2]" />
+                      <Edit3 size={16} className="text-[#1C1C1E] shrink-0 stroke-[2.2]" />
                       <span>Match Count</span>
                     </motion.button>
 
@@ -591,13 +646,13 @@ export function MedicineCard({
                       onClick={() => handleAudit('STRIP_DISCARDED_EARLY')}
                       disabled={isAuditing}
                       className="
-                        min-h-[44px] px-2 py-2 rounded-xl
+                        min-h-[46px] px-2 py-2 rounded-xl
                         border border-[#E5E5EA] bg-white hover:bg-[#F2F2F7] active:bg-[#E5E5EA]
                         text-[#1C1C1E] text-[12px] font-semibold
                         flex flex-col items-center justify-center gap-1 shadow-xs transition-colors
                       "
                     >
-                      <AlertCircle size={16} className="text-[#1C1C1E] shrink-0 stroke-[2]" />
+                      <AlertCircle size={16} className="text-[#1C1C1E] shrink-0 stroke-[2.2]" />
                       <span>Discarded Early</span>
                     </motion.button>
                   </div>
