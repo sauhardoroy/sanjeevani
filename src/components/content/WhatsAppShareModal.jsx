@@ -4,11 +4,8 @@ import {
   X, 
   MessageCircle, 
   Phone, 
-  RotateCcw, 
-  Send, 
-  Sparkles,
-  User,
-  Users
+  Send,
+  RotateCcw
 } from 'lucide-react';
 import { buildReminderMessage, getCustomWhatsAppUrl } from '../../lib/whatsapp';
 
@@ -20,8 +17,8 @@ const SPRING = {
 };
 
 /**
- * WhatsAppShareModal — Customizable WhatsApp Message Composer
- * Allows Dad to edit the text freely, switch between helpful presets, or type any custom note.
+ * WhatsAppShareModal — Custom WhatsApp Message Composer
+ * Allows Dad to compose any custom message to send over WhatsApp with zero rigid presets.
  */
 export function WhatsAppShareModal({
   isOpen,
@@ -30,23 +27,25 @@ export function WhatsAppShareModal({
   status,
   settings,
 }) {
-  const [activePreset, setActivePreset] = useState('DEFAULT');
   const [customText, setCustomText] = useState('');
   const [phone, setPhone] = useState(settings?.grandparentsPhone || '');
 
-  // Update text when medicine or preset changes
+  // Initialize with a friendly customizable draft when opening
   useEffect(() => {
     if (medicine && isOpen) {
-      setCustomText(buildReminderMessage(medicine, status, settings, activePreset));
+      setCustomText(buildReminderMessage(medicine, status, settings));
       setPhone(settings?.grandparentsPhone || '');
     }
-  }, [medicine, status, settings, activePreset, isOpen]);
+  }, [medicine, status, settings, isOpen]);
 
   if (!isOpen || !medicine) return null;
 
-  const handleSelectPreset = (presetKey) => {
-    setActivePreset(presetKey);
-    setCustomText(buildReminderMessage(medicine, status, settings, presetKey));
+  const handleResetToSummary = () => {
+    setCustomText(buildReminderMessage(medicine, status, settings));
+  };
+
+  const handleClear = () => {
+    setCustomText('');
   };
 
   const handleSend = (e) => {
@@ -94,10 +93,10 @@ export function WhatsAppShareModal({
               </div>
               <div>
                 <h3 className="text-[16px] font-bold text-[#1C1C1E] tracking-tight">
-                  WhatsApp Message
+                  Custom WhatsApp Message
                 </h3>
                 <p className="text-[11.5px] text-[#8E8E93]">
-                  {medicine.name} for {recipientLabel}
+                  {medicine.name} • {recipientLabel}
                 </p>
               </div>
             </div>
@@ -113,73 +112,50 @@ export function WhatsAppShareModal({
           </div>
 
           <form onSubmit={handleSend} className="flex flex-col gap-4">
-            {/* Preset Quick Chips */}
-            <div>
-              <span className="text-[10.5px] font-bold uppercase tracking-wider text-[#8E8E93] block mb-1.5">
-                Quick Template Presets
-              </span>
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <button
-                  type="button"
-                  onClick={() => handleSelectPreset('DEFAULT')}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${
-                    activePreset === 'DEFAULT'
-                      ? 'bg-[#1C1C1E] text-white border-[#1C1C1E] shadow-xs'
-                      : 'bg-[#F8F9FB] text-[#3A3A3C] border-[#E5E5EA] hover:bg-[#F2F2F7]'
-                  }`}
-                >
-                  Daily Check-in
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleSelectPreset('REFILL')}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${
-                    activePreset === 'REFILL'
-                      ? 'bg-[#1C1C1E] text-white border-[#1C1C1E] shadow-xs'
-                      : 'bg-[#F8F9FB] text-[#3A3A3C] border-[#E5E5EA] hover:bg-[#F2F2F7]'
-                  }`}
-                >
-                  Refill Alert
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleSelectPreset('SIBLING')}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${
-                    activePreset === 'SIBLING'
-                      ? 'bg-[#1C1C1E] text-white border-[#1C1C1E] shadow-xs'
-                      : 'bg-[#F8F9FB] text-[#3A3A3C] border-[#E5E5EA] hover:bg-[#F2F2F7]'
-                  }`}
-                >
-                  Ask Sibling to Buy
-                </button>
-              </div>
-            </div>
-
             {/* Custom Editable Message Textarea */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label htmlFor="custom-whatsapp-text" className="text-[10.5px] font-bold uppercase tracking-wider text-[#8E8E93]">
-                  Message Content (Fully Editable)
+                <label htmlFor="custom-whatsapp-text" className="text-[11px] font-bold uppercase tracking-wider text-[#8E8E93]">
+                  Your Message
                 </label>
-                <span className="text-[10.5px] text-[#8E8E93]">
-                  {customText.length} chars
-                </span>
+                <div className="flex items-center gap-2 text-[11px]">
+                  <button
+                    type="button"
+                    onClick={handleResetToSummary}
+                    className="text-[#007AFF] hover:underline font-semibold"
+                  >
+                    Insert Status Draft
+                  </button>
+                  <span className="text-[#C7C7CC]">•</span>
+                  <button
+                    type="button"
+                    onClick={handleClear}
+                    className="text-[#8E8E93] hover:text-[#FF3B30] font-medium"
+                  >
+                    Clear
+                  </button>
+                </div>
               </div>
+
               <textarea
                 id="custom-whatsapp-text"
-                rows={4}
+                rows={5}
                 value={customText}
                 onChange={(e) => setCustomText(e.target.value)}
-                placeholder="Type your custom message..."
+                placeholder="Type your customized message here..."
+                autoFocus
                 className="
                   w-full rounded-2xl border border-[#E5E5EA] bg-[#F8F9FB]
-                  p-3 text-[13px] text-[#1C1C1E] leading-relaxed
+                  p-3.5 text-[13px] text-[#1C1C1E] leading-relaxed
                   focus:bg-white focus:border-[#25D366] focus:outline-none
                   transition-all resize-none shadow-2xs
                 "
               />
+              <div className="flex justify-end mt-1">
+                <span className="text-[10.5px] text-[#8E8E93]">
+                  {customText.length} characters
+                </span>
+              </div>
             </div>
 
             {/* Optional Recipient Phone Number */}
@@ -187,7 +163,7 @@ export function WhatsAppShareModal({
               <Phone size={15} className="text-[#8E8E93] shrink-0" />
               <div className="flex-1 min-w-0">
                 <label htmlFor="whatsapp-phone-input" className="text-[10px] font-bold uppercase tracking-wider text-[#8E8E93] block">
-                  Send To (Phone Number or leave blank to pick contact)
+                  Send To (Phone Number or leave blank to pick contact in WhatsApp)
                 </label>
                 <input
                   id="whatsapp-phone-input"
@@ -212,10 +188,11 @@ export function WhatsAppShareModal({
 
               <button
                 type="submit"
+                disabled={!customText.trim()}
                 className="
                   flex-2 py-3 px-5 rounded-full
-                  bg-[#25D366] hover:bg-[#1EBE5D] text-white
-                  text-xs font-bold shadow-xs flex items-center justify-center gap-2
+                  bg-[#25D366] hover:bg-[#1EBE5D] disabled:opacity-50 disabled:cursor-not-allowed
+                  text-white text-xs font-bold shadow-xs flex items-center justify-center gap-2
                   transition-transform active:scale-96
                 "
               >
