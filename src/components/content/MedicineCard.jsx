@@ -345,15 +345,19 @@ export function MedicineCard({
                     return (
                       <div
                         key={sIdx}
-                        className="p-2.5 rounded-xl bg-[#F8F9FB] border border-[#E5E5EA] flex items-center justify-between gap-2 flex-wrap"
+                        className="p-3 rounded-xl bg-[#F8F9FB] border border-[#E5E5EA] flex flex-col gap-2"
                       >
-                        <div className="flex items-center gap-2">
-                          <span className="text-[12px] font-bold text-[#1C1C1E]">
-                            {hasMultipleOpen ? `Strip #${sIdx + 1}` : 'Current Strip'}
-                          </span>
-                          <span className="text-[11.5px] text-[#8E8E93]">
-                            {stripPills} left
-                          </span>
+                        {/* Header: Strip info + Low indicator */}
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[12px] font-bold text-[#1C1C1E]">
+                              {hasMultipleOpen ? `Strip #${sIdx + 1}` : 'Active Strip'}
+                            </span>
+                            <span className="text-[11.5px] text-[#8E8E93]">
+                              {stripPills} of {tabletsPerStrip} pills remaining
+                            </span>
+                          </div>
+
                           {isDropZone && (
                             <span className="flex items-center gap-1 text-[10.5px] font-medium text-[#8E8E93] bg-white border border-[#E5E5EA] px-2 py-0.5 rounded-full shadow-xs">
                               <span className="w-1.5 h-1.5 rounded-full bg-[#FF9F0A]" />
@@ -362,8 +366,8 @@ export function MedicineCard({
                           )}
                         </div>
 
-                        {/* Physical Blister Dots for this Strip */}
-                        <div className="flex items-center gap-1.5">
+                        {/* Physical Blister Dots (Full-width foil container, wrap seamlessly without overflow) */}
+                        <div className="flex items-center gap-1.5 flex-wrap p-2 rounded-lg bg-white border border-[#E5E5EA]">
                           {Array.from({ length: tabletsPerStrip }).map((_, pIdx) => {
                             const filled = pIdx < stripPills;
                             const inBuffer = pIdx < abandonmentBuffer;
@@ -373,7 +377,7 @@ export function MedicineCard({
                                 whileTap={{ scale: 0.8 }}
                                 transition={TOUCH_SPRING}
                                 className={`
-                                  h-5 w-5 rounded-full flex items-center justify-center select-none
+                                  h-5 w-5 rounded-full flex items-center justify-center shrink-0 select-none
                                   ${filled
                                     ? inBuffer && isDropZone
                                       ? 'border border-[#FF9F0A] bg-[#FFF8EB]'
@@ -457,7 +461,7 @@ export function MedicineCard({
                           </div>
 
                           {/* Direct Tactile Blister Dots Selector */}
-                          <div className="flex items-center gap-1.5 flex-wrap">
+                          <div className="flex items-center gap-1.5 flex-wrap p-2 rounded-lg bg-white border border-[#E5E5EA]">
                             {Array.from({ length: tabletsPerStrip }).map((_, pIdx) => {
                               const filled = pIdx < stripPills;
                               return (
@@ -471,7 +475,7 @@ export function MedicineCard({
                                       filled && pIdx === stripPills - 1 ? pIdx : pIdx + 1
                                     )
                                   }
-                                  className={`h-6 w-6 rounded-full flex items-center justify-center transition-all ${
+                                  className={`h-6 w-6 rounded-full flex items-center justify-center shrink-0 transition-all ${
                                     filled
                                       ? 'bg-[#1C1C1E] text-white shadow-xs'
                                       : 'border border-dashed border-[#D1D1D6] bg-white hover:bg-slate-100'
