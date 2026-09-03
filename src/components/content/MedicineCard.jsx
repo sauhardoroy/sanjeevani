@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 
 import { evaluateMedicineStatus } from '../../lib/depletion';
-import { getWhatsAppUrl } from '../../lib/whatsapp';
+import { WhatsAppShareModal } from './WhatsAppShareModal';
 import { RollingStepper } from './RollingStepper';
 
 // -----------------------------------------------------------------------------
@@ -194,17 +194,16 @@ export function MedicineCard({
     }
   };
 
+  const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState(false);
+
   const handleWhatsApp = (e) => {
     if (e) e.stopPropagation();
-    if (!medicine) return;
-    const url = getWhatsAppUrl(medicine, status, settings);
-    if (url) {
-      window.open(url, '_blank', 'noopener,noreferrer');
-    }
+    setIsWhatsAppModalOpen(true);
   };
 
   return (
-    <motion.article
+    <>
+      <motion.article
       layout
       transition={SPRING}
       className={`
@@ -588,8 +587,8 @@ export function MedicineCard({
                     </div>
                   </motion.div>
                 ) : (
-                  /* 3. Professional, Minimalist, Black & White Action Buttons */
-                  <div className="grid grid-cols-3 gap-2">
+                  /* 3. Professional, Minimalist Action Buttons (Count Matches & Match Count) */
+                  <div className="grid grid-cols-2 gap-2.5">
                     {/* Count Matches */}
                     <motion.button
                       whileTap={{ scale: 0.95, y: 1 }}
@@ -598,13 +597,13 @@ export function MedicineCard({
                       onClick={() => handleAudit('MATCHES_EXPECTED')}
                       disabled={isAuditing}
                       className="
-                        min-h-[46px] px-2 py-2 rounded-xl
+                        min-h-[48px] px-3 py-2.5 rounded-xl
                         border border-[#E5E5EA] bg-white hover:bg-[#F2F2F7] active:bg-[#E5E5EA]
-                        text-[#1C1C1E] text-[12px] font-semibold
-                        flex flex-col items-center justify-center gap-1 shadow-xs transition-colors
+                        text-[#1C1C1E] text-[12.5px] font-bold
+                        flex items-center justify-center gap-2 shadow-xs transition-colors
                       "
                     >
-                      <CheckCircle2 size={16} className="text-[#1C1C1E] shrink-0 stroke-[2.2]" />
+                      <CheckCircle2 size={17} className="text-[#34C759] shrink-0 stroke-[2.2]" />
                       <span>Count Matches</span>
                     </motion.button>
 
@@ -616,32 +615,14 @@ export function MedicineCard({
                       onClick={startEditing}
                       disabled={isAuditing}
                       className="
-                        min-h-[46px] px-2 py-2 rounded-xl
+                        min-h-[48px] px-3 py-2.5 rounded-xl
                         border border-[#E5E5EA] bg-white hover:bg-[#F2F2F7] active:bg-[#E5E5EA]
-                        text-[#1C1C1E] text-[12px] font-semibold
-                        flex flex-col items-center justify-center gap-1 shadow-xs transition-colors
+                        text-[#1C1C1E] text-[12.5px] font-bold
+                        flex items-center justify-center gap-2 shadow-xs transition-colors
                       "
                     >
-                      <Edit3 size={16} className="text-[#1C1C1E] shrink-0 stroke-[2.2]" />
+                      <Edit3 size={17} className="text-[#1C1C1E] shrink-0 stroke-[2.2]" />
                       <span>Match Count</span>
-                    </motion.button>
-
-                    {/* Discarded Early */}
-                    <motion.button
-                      whileTap={{ scale: 0.95, y: 1 }}
-                      transition={TOUCH_SPRING}
-                      type="button"
-                      onClick={() => handleAudit('STRIP_DISCARDED_EARLY')}
-                      disabled={isAuditing}
-                      className="
-                        min-h-[46px] px-2 py-2 rounded-xl
-                        border border-[#E5E5EA] bg-white hover:bg-[#F2F2F7] active:bg-[#E5E5EA]
-                        text-[#1C1C1E] text-[12px] font-semibold
-                        flex flex-col items-center justify-center gap-1 shadow-xs transition-colors
-                      "
-                    >
-                      <AlertCircle size={16} className="text-[#1C1C1E] shrink-0 stroke-[2.2]" />
-                      <span>Discarded Early</span>
                     </motion.button>
                   </div>
                 )}
@@ -689,6 +670,16 @@ export function MedicineCard({
         )}
       </AnimatePresence>
     </motion.article>
+
+    {/* Customizable WhatsApp Message Composer */}
+    <WhatsAppShareModal
+      isOpen={isWhatsAppModalOpen}
+      onClose={() => setIsWhatsAppModalOpen(false)}
+      medicine={medicine}
+      status={status}
+      settings={settings}
+    />
+  </>
   );
 }
 

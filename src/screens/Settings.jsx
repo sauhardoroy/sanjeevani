@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { GlassTopBar } from '../components/glass/GlassTopBar';
 import { 
   User, 
   Users, 
@@ -67,12 +66,7 @@ export function Settings({
 
   return (
     <div className="min-h-screen bg-[#F2F2F7] flex flex-col pb-28">
-      <GlassTopBar
-        title="Settings"
-        subtitle="Caregiver preferences & WhatsApp link"
-      />
-
-      <main className="p-4 max-w-lg mx-auto w-full flex flex-col gap-6">
+      <main className="p-4 pt-6 max-w-lg mx-auto w-full flex flex-col gap-6">
         <form onSubmit={handleSave} className="flex flex-col gap-6">
           
           {/* ------------------------------------------------------------ */}

@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { GlassTopBar } from '../components/glass/GlassTopBar';
 import { 
   CheckCircle2, 
   AlertTriangle, 
@@ -83,20 +82,12 @@ export function History({ auditLogs = [], settings }) {
     }
   };
 
-  const subtitle = `${currentLogs.length} verification record${currentLogs.length === 1 ? '' : 's'} for ${currentPersonName}`;
-
   return (
     <div className="min-h-screen bg-[#F2F2F7] flex flex-col pb-28">
-      {/* Functional Glass Top Bar */}
-      <GlassTopBar
-        title="Audit History"
-        subtitle={subtitle}
-      />
-
       {/* ------------------------------------------------------------------ */}
       {/* Two Circles Inside a Pill (Grandmother & Grandfather) */}
       {/* ------------------------------------------------------------------ */}
-      <div className="mx-auto w-fit flex flex-col items-center justify-center pt-3 pb-1 select-none">
+      <div className="mx-auto w-fit flex flex-col items-center justify-center pt-4 pb-2 select-none">
         <div className="relative flex items-center gap-1 rounded-full border-[1.6px] border-[#E5E5EA] bg-white/95 backdrop-blur-3xl p-1 shadow-xs">
           
           {/* Circle Option 1: Grandmother */}

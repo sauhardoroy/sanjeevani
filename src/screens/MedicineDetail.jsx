@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { GlassTopBar } from '../components/glass/GlassTopBar';
 import { PrimaryButton, SecondaryButton, TextButton } from '../components/content/Buttons';
 import { evaluateMedicineStatus } from '../lib/depletion';
-import { getWhatsAppUrl } from '../lib/whatsapp';
+import { WhatsAppShareModal } from '../components/content/WhatsAppShareModal';
 import { 
   CheckCircle2, 
   AlertTriangle, 
@@ -16,7 +16,7 @@ import {
 
 /**
  * MedicineDetail — Deep-dive inspection & weekend reconciliation audit
- * Features two equal-weight audit buttons and 1-tap WhatsApp deep link.
+ * Features one-tap count verification and custom WhatsApp composer.
  */
 export function MedicineDetail({ 
   medicine, 
@@ -25,13 +25,14 @@ export function MedicineDetail({
   onAudit, 
   onDelete 
 }) {
+  const [isWhatsAppOpen, setIsWhatsAppOpen] = useState(false);
+
   if (!medicine) return null;
 
   const status = evaluateMedicineStatus(medicine);
 
   const handleWhatsApp = () => {
-    const url = getWhatsAppUrl(medicine, status, settings);
-    window.open(url, '_blank');
+    setIsWhatsAppOpen(true);
   };
 
   const scheduleText = Array.isArray(medicine.schedule?.timeOfDay)
@@ -171,18 +172,6 @@ export function MedicineDetail({
               </div>
             </SecondaryButton>
 
-            <SecondaryButton
-              variant="amber"
-              onClick={() => onAudit(medicine, 'STRIP_DISCARDED_EARLY')}
-              fullWidth
-              className="justify-start px-4"
-            >
-              <AlertTriangle className="w-5 h-5 text-[#D97706] shrink-0" />
-              <div className="flex flex-col text-left">
-                <span className="text-[15px] font-bold text-[#B45309]">Strip Discarded Early</span>
-                <span className="text-[12px] font-normal text-[#6E6E73]">Logs remaining {status.pillsOnActiveStrip} pills as lost & opens next strip</span>
-              </div>
-            </SecondaryButton>
           </div>
         </div>
 
@@ -198,6 +187,15 @@ export function MedicineDetail({
           </PrimaryButton>
         </div>
       </main>
+
+      {/* Customizable WhatsApp Modal */}
+      <WhatsAppShareModal
+        isOpen={isWhatsAppOpen}
+        onClose={() => setIsWhatsAppOpen(false)}
+        medicine={medicine}
+        status={status}
+        settings={settings}
+      />
     </div>
   );
 }

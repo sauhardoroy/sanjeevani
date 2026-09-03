@@ -1,6 +1,7 @@
 /**
  * Project Sanjeevani — WhatsApp URL & Message Generator
- * Creates friendly, pre-filled WhatsApp messages for Dad to send in 1 tap.
+ * Creates friendly, pre-filled WhatsApp messages for Dad to send in 1 tap,
+ * with full support for editing and custom messages.
  */
 
 /**
@@ -11,34 +12,51 @@ export function cleanPhoneNumber(phone = '') {
 }
 
 /**
- * Builds a contextual reminder message based on medicine status
+ * Builds a contextual reminder message based on medicine status and preset type
  */
-export function buildReminderMessage(medicine, status, settings) {
-  const recipient = settings?.grandparentsName || 'Mom & Dad';
+export function buildReminderMessage(medicine, status, settings, preset = 'DEFAULT') {
+  const personName = medicine?.recipient === 'GRANDFATHER'
+    ? (settings?.grandfatherName || 'Grandfather')
+    : (settings?.grandmotherName || 'Grandmother');
+  const familyName = settings?.grandparentsName || 'Mom & Dad';
   const medName = medicine?.name || 'medicine';
+  const safeDays = status?.safeDays ?? 0;
+  const fullStrips = medicine?.stock?.fullStripsDelivered ?? 0;
+
+  if (preset === 'SIBLING') {
+    return `Hi, just checking ${personName}'s medicines. ${medName} has about ${safeDays} days of supply left (${fullStrips} full strips in reserve). Could you please pick up a refill when you visit or pass by the pharmacy? Thanks!`;
+  }
+
+  if (preset === 'REFILL' || status?.type === 'REFILL_NOW') {
+    return `Hi ${familyName}, just wanted to let you know that ${personName}'s ${medName} is running low (about ${safeDays} days left). I am arranging a fresh pack and will make sure it reaches on time.`;
+  }
 
   if (status?.type === 'ABANDONMENT_RISK') {
     const pillsLeft = status.pillsOnActiveStrip;
-    return `Hi ${recipient}, hope you are doing well! Just a gentle reminder that there are still ${pillsLeft} pills left in the strip of ${medName} on the table. Please finish those before opening a new box! Love you.`;
+    return `Hi ${familyName}, gentle reminder that there are still ${pillsLeft} pills left in the strip of ${medName} on the table. Please finish those before opening a new box! Love you.`;
   }
 
-  if (status?.type === 'REFILL_NOW') {
-    return `Hi ${recipient}, just wanted to let you know that your ${medName} is running low (about 1-2 days left). I am arranging a fresh pack and will bring it over.`;
-  }
-
-  return `Hi ${recipient}, just checking in to make sure you took your ${medName} on time today. Hope you are having a wonderful day!`;
+  return `Hi ${familyName}, hope you are doing well! Just checking in to make sure ${personName} took ${medName} today. Please let me know if you need anything.`;
 }
 
 /**
- * Generates the full WhatsApp deep link
+ * Generates the full WhatsApp deep link for any custom text
  */
-export function getWhatsAppUrl(medicine, status, settings) {
-  const phone = cleanPhoneNumber(settings?.grandparentsPhone || '');
-  const message = buildReminderMessage(medicine, status, settings);
-  const encoded = encodeURIComponent(message);
+export function getCustomWhatsAppUrl(phone = '', message = '') {
+  const cleaned = cleanPhoneNumber(phone);
+  const encoded = encodeURIComponent(message.trim());
   
-  if (phone) {
-    return `https://wa.me/${phone}?text=${encoded}`;
+  if (cleaned) {
+    return `https://wa.me/${cleaned}?text=${encoded}`;
   }
   return `https://wa.me/?text=${encoded}`;
+}
+
+/**
+ * Generates the default WhatsApp deep link
+ */
+export function getWhatsAppUrl(medicine, status, settings) {
+  const phone = settings?.grandparentsPhone || '';
+  const message = buildReminderMessage(medicine, status, settings);
+  return getCustomWhatsAppUrl(phone, message);
 }

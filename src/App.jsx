@@ -130,10 +130,13 @@ export function App() {
         />
       )}
 
-      {/* Floating Glass Bottom Nav */}
+      {/* Floating Glass Bottom Nav with Left Navigation and Right Add Button */}
       <GlassBottomNav
         currentTab={currentTab}
         onSelectTab={(tab) => setCurrentTab(tab)}
+        onAddMedicine={() => {
+          setIsAddSheetOpen(true);
+        }}
       />
 
       {/* Add Medicine Glass Bottom Sheet */}

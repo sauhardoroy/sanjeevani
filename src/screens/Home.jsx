@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { GlassFAB } from '../components/glass/GlassFAB';
 import { MedicineCard } from '../components/content/MedicineCard';
 import { evaluateMedicineStatus } from '../lib/depletion';
 import { PlusCircle, Heart, Check, Plus, HelpCircle } from 'lucide-react';
@@ -408,9 +407,6 @@ export function Home({
           </motion.div>
         </AnimatePresence>
       </motion.main>
-
-      {/* Floating Glass FAB for instant addition */}
-      <GlassFAB onClick={() => onOpenAddSheet?.(activeProfile)} />
     </div>
   );
 }
