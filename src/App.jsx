@@ -15,17 +15,20 @@ import { Settings } from './screens/Settings';
 import { AddMedicineSheet } from './screens/AddMedicineSheet';
 import { GlassBottomNav } from './components/glass/GlassBottomNav';
 import { Toast } from './components/content/Toast';
+import { AppGuideModal } from './components/guide/AppGuideModal';
 
 export function App() {
   const [appData, setAppData] = useState(getData());
   const [currentTab, setCurrentTab] = useState('home');
   const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
+  const [addSheetRecipient, setAddSheetRecipient] = useState('GRANDMOTHER');
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [toast, setToast] = useState(null);
 
   // Subscribe to storage changes
   useEffect(() => {
-    const unsubscribe = subscribe((newData) => {
-      setAppData(newData);
+    const unsubscribe = subscribe((freshData) => {
+      setAppData(freshData);
     });
     return unsubscribe;
   }, []);
@@ -80,13 +83,18 @@ export function App() {
           settings={appData.settings}
           onAudit={handleAudit}
           onDelete={handleDeleteMedicine}
-          onOpenAddSheet={() => setIsAddSheetOpen(true)}
+          onOpenAddSheet={(recipient) => {
+            if (recipient) setAddSheetRecipient(recipient);
+            setIsAddSheetOpen(true);
+          }}
+          onOpenGuide={() => setIsGuideOpen(true)}
         />
       )}
 
       {currentTab === 'history' && (
         <History
           auditLogs={appData.auditLogs}
+          settings={appData.settings}
         />
       )}
 
@@ -96,6 +104,7 @@ export function App() {
           onUpdateSettings={updateSettings}
           onResetData={handleResetData}
           onShowToast={showToast}
+          onOpenGuide={() => setIsGuideOpen(true)}
         />
       )}
 
@@ -110,6 +119,14 @@ export function App() {
         isOpen={isAddSheetOpen}
         onClose={() => setIsAddSheetOpen(false)}
         onSave={handleSaveMedicine}
+        initialRecipient={addSheetRecipient}
+        settings={appData.settings}
+      />
+
+      {/* 3D CardSwipe App Guide & Tutorial Modal */}
+      <AppGuideModal
+        isOpen={isGuideOpen}
+        onClose={() => setIsGuideOpen(false)}
       />
     </div>
   );

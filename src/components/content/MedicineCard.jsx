@@ -399,13 +399,9 @@ export function MedicineCard({
                           )}
                         </div>
 
-                        {/* Physical Blister Pack Foil Container with Metallic Sheen & Press-Through Depth */}
-                        <div className="relative overflow-hidden rounded-xl border border-[#CBD5E1] bg-gradient-to-b from-[#F8FAFC] via-[#E2E8F0] to-[#CBD5E1] p-2.5 shadow-[inset_0_1px_1.5px_rgba(255,255,255,0.9),0_2px_4px_rgba(0,0,0,0.06)]">
-                          {/* Diagonal foil sheen */}
-                          <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/25 to-transparent pointer-events-none" />
-
-                          {/* 3D Blister Pockets (Convex Filled Bubbles & Popped Cavities) */}
-                          <div className="relative z-10 flex items-center gap-2 flex-wrap">
+                        {/* Minimalist Apple Blister Pack Visualizer */}
+                        <div className="rounded-xl border border-[#E5E5EA] bg-white p-2.5 shadow-2xs">
+                          <div className="flex items-center gap-1.5 flex-wrap">
                             {Array.from({ length: tabletsPerStrip }).map((_, pIdx) => {
                               const filled = pIdx < stripPills;
                               const inBuffer = pIdx < abandonmentBuffer;
@@ -413,31 +409,25 @@ export function MedicineCard({
                               return (
                                 <motion.div
                                   key={pIdx}
-                                  whileTap={{ scale: 0.8, y: 1 }}
+                                  whileTap={{ scale: 0.85 }}
                                   transition={TOUCH_SPRING}
                                   className={`
-                                    h-6 w-6 rounded-full flex items-center justify-center shrink-0 select-none cursor-pointer transition-shadow
+                                    h-5.5 w-5.5 rounded-full flex items-center justify-center shrink-0 select-none transition-all
                                     ${filled
                                       ? inBuffer && isDropZone
-                                        ? 'bg-gradient-to-b from-white via-[#FFF8EB] to-[#FDE68A] border border-[#F59E0B]/80 shadow-[0_2px_4px_rgba(217,119,6,0.25),inset_0_1px_1.5px_rgba(255,255,255,1),inset_0_-1px_1.5px_rgba(180,83,9,0.2)]'
-                                        : 'bg-gradient-to-b from-white via-[#F8FAFC] to-[#CBD5E1] border border-[#94A3B8]/80 shadow-[0_2px_4px_rgba(0,0,0,0.18),inset_0_1px_1.5px_rgba(255,255,255,1),inset_0_-1px_1.5px_rgba(0,0,0,0.15)]'
-                                      : 'bg-gradient-to-b from-[#94A3B8]/35 to-[#CBD5E1]/50 border border-dashed border-[#94A3B8]/70 shadow-[inset_0_2px_3px_rgba(0,0,0,0.2),0_1px_1px_rgba(255,255,255,0.7)]'
+                                        ? 'bg-[#FFF8EB] border border-[#FF9F0A]/50 text-[#B45309]'
+                                        : 'bg-[#F2F2F7] border border-[#E5E5EA] text-[#1C1C1E]'
+                                      : 'border border-dashed border-[#D1D1D6] bg-transparent'
                                     }
                                   `}
-                                  title={filled ? `Pill #${pIdx + 1} intact` : `Pill #${pIdx + 1} consumed / pressed`}
+                                  title={filled ? `Pill #${pIdx + 1} intact` : `Pill #${pIdx + 1} consumed`}
                                 >
-                                  {filled ? (
-                                    /* Physical Tablet Core */
+                                  {filled && (
                                     <div
-                                      className={`h-2.5 w-2.5 rounded-full transition-transform ${
-                                        inBuffer && isDropZone
-                                          ? 'bg-gradient-to-b from-[#F59E0B] to-[#D97706] shadow-[0_0_5px_rgba(245,158,11,0.7),inset_0_1px_1px_rgba(255,255,255,0.5)]'
-                                          : 'bg-gradient-to-b from-[#334155] to-[#0F172A] shadow-[inset_0_1px_1px_rgba(255,255,255,0.4),0_1px_2px_rgba(0,0,0,0.3)]'
+                                      className={`h-2 w-2 rounded-full ${
+                                        inBuffer && isDropZone ? 'bg-[#FF9F0A]' : 'bg-[#1C1C1E]'
                                       }`}
                                     />
-                                  ) : (
-                                    /* Popped empty foil depression cavity */
-                                    <div className="h-1.5 w-1.5 rounded-full border border-[#94A3B8]/40 bg-black/10" />
                                   )}
                                 </motion.div>
                               );
@@ -507,8 +497,8 @@ export function MedicineCard({
                             </div>
                           </div>
 
-                          {/* Metallic Tactile Selector */}
-                          <div className="relative overflow-hidden rounded-xl border border-[#CBD5E1] bg-gradient-to-b from-[#F8FAFC] via-[#E2E8F0] to-[#CBD5E1] p-2.5 shadow-inner">
+                          {/* Minimalist Tactile Selector */}
+                          <div className="rounded-xl border border-[#E5E5EA] bg-white p-2.5 shadow-2xs">
                             <div className="flex items-center gap-2 flex-wrap">
                               {Array.from({ length: tabletsPerStrip }).map((_, pIdx) => {
                                 const filled = pIdx < stripPills;
@@ -516,7 +506,7 @@ export function MedicineCard({
                                   <motion.button
                                     key={pIdx}
                                     type="button"
-                                    whileTap={{ scale: 0.75, y: 1 }}
+                                    whileTap={{ scale: 0.85 }}
                                     onClick={() =>
                                       handleSetStripCount(
                                         sIdx,
@@ -524,19 +514,17 @@ export function MedicineCard({
                                       )
                                     }
                                     className={`
-                                      h-7 w-7 rounded-full flex items-center justify-center shrink-0 transition-transform
+                                      h-7 w-7 rounded-full flex items-center justify-center shrink-0 transition-all
                                       ${filled
-                                        ? 'bg-gradient-to-b from-white via-[#F8FAFC] to-[#CBD5E1] border border-[#94A3B8] shadow-[0_2px_4px_rgba(0,0,0,0.2),inset_0_1px_1.5px_rgba(255,255,255,1)]'
-                                        : 'bg-gradient-to-b from-[#94A3B8]/30 to-[#CBD5E1]/50 border border-dashed border-[#94A3B8]/80 shadow-inner'
+                                        ? 'bg-[#1C1C1E] text-white shadow-xs'
+                                        : 'border border-dashed border-[#D1D1D6] bg-transparent hover:bg-[#F2F2F7]'
                                       }
                                     `}
                                     aria-label={`Set strip ${sIdx + 1} to ${pIdx + 1} pills`}
                                   >
                                     {filled ? (
-                                      <div className="h-3 w-3 rounded-full bg-gradient-to-b from-[#334155] to-[#0F172A] shadow-xs" />
-                                    ) : (
-                                      <div className="h-1.5 w-1.5 rounded-full bg-black/10" />
-                                    )}
+                                      <div className="h-2.5 w-2.5 rounded-full bg-white" />
+                                    ) : null}
                                   </motion.button>
                                 );
                               })}
@@ -678,10 +666,9 @@ export function MedicineCard({
                 )}
               </AnimatePresence>
 
-              {/* 4. Subtle Footer Metadata & Remove */}
-              <div className="pt-1 flex items-center justify-between text-[11px] text-[#8E8E93]">
-                <span>Abandonment margin: {abandonmentBuffer} pills</span>
-                {onDelete && (
+              {/* 4. Remove Medicine */}
+              {onDelete && (
+                <div className="pt-1 flex items-center justify-end text-[11px]">
                   <button
                     type="button"
                     onClick={() => {
@@ -689,13 +676,13 @@ export function MedicineCard({
                         onDelete(medicine.id);
                       }
                     }}
-                    className="text-[#FF3B30] hover:underline font-medium flex items-center gap-1"
+                    className="text-[#FF3B30] hover:underline font-semibold flex items-center gap-1.5 py-1 px-2 rounded-lg hover:bg-red-50 transition-colors"
                   >
                     <Trash2 size={12} />
-                    <span>Remove</span>
+                    <span>Delete Medicine</span>
                   </button>
-                )}
-              </div>
+                </div>
+              )}
 
             </div>
           </motion.div>

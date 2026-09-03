@@ -9,8 +9,10 @@ import {
   Check, 
   MessageCircle, 
   Heart, 
-  Database 
+  Database,
+  HelpCircle 
 } from 'lucide-react';
+import { GrandmotherIcon, GrandfatherIcon } from '../components/icons/GrandparentIcons';
 
 const TOUCH_SPRING = {
   type: 'spring',
@@ -27,10 +29,13 @@ export function Settings({
   settings, 
   onUpdateSettings, 
   onResetData, 
-  onShowToast 
+  onShowToast,
+  onOpenGuide 
 }) {
   const [caregiverName, setCaregiverName] = useState(settings?.caregiverName || 'Dad');
   const [grandparentsName, setGrandparentsName] = useState(settings?.grandparentsName || 'Mom & Dad');
+  const [grandmotherName, setGrandmotherName] = useState(settings?.grandmotherName || 'Grandmother');
+  const [grandfatherName, setGrandfatherName] = useState(settings?.grandfatherName || 'Grandfather');
   const [grandparentsPhone, setGrandparentsPhone] = useState(settings?.grandparentsPhone || '');
   const [isSaved, setIsSaved] = useState(false);
 
@@ -39,6 +44,8 @@ export function Settings({
     onUpdateSettings({
       caregiverName: caregiverName.trim() || 'Dad',
       grandparentsName: grandparentsName.trim() || 'Mom & Dad',
+      grandmotherName: grandmotherName.trim() || 'Grandmother',
+      grandfatherName: grandfatherName.trim() || 'Grandfather',
       grandparentsPhone: grandparentsPhone.trim()
     });
     setIsSaved(true);
@@ -47,12 +54,14 @@ export function Settings({
   };
 
   const handleReset = () => {
-    if (window.confirm('Reset all medicines and audit logs back to initial demo data?')) {
+    if (window.confirm('Reset all medicines and verification records back to default starting state?')) {
       onResetData();
       setCaregiverName('Dad');
       setGrandparentsName('Mom & Dad');
+      setGrandmotherName('Grandmother');
+      setGrandfatherName('Grandfather');
       setGrandparentsPhone('+91 98765 43210');
-      onShowToast?.('Restored demo data');
+      onShowToast?.('Application data reset');
     }
   };
 
@@ -72,7 +81,7 @@ export function Settings({
           <section className="flex flex-col gap-2.5">
             <div className="px-1">
               <h2 className="text-[12.5px] font-bold uppercase tracking-wider text-[#1C1C1E]">
-                Family & Greetings
+                Family & Profiles
               </h2>
             </div>
 
@@ -99,21 +108,43 @@ export function Settings({
 
               <div className="h-px bg-[#F2F2F7]" />
 
-              {/* Grandparents' Calling Name Row */}
+              {/* Grandmother Profile Name */}
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#F2F2F7] text-[#1C1C1E] shadow-xs">
-                  <Users size={18} strokeWidth={2} />
+                  <GrandmotherIcon size={20} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <label htmlFor="grandparents-name" className="text-[10.5px] font-semibold uppercase tracking-wider text-[#8E8E93] block">
-                    Grandparents' Calling Name
+                  <label htmlFor="grandmother-name" className="text-[10.5px] font-semibold uppercase tracking-wider text-[#8E8E93] block">
+                    Grandmother's Name / Calling Label
                   </label>
                   <input
-                    id="grandparents-name"
+                    id="grandmother-name"
                     type="text"
-                    value={grandparentsName}
-                    onChange={(e) => setGrandparentsName(e.target.value)}
-                    placeholder="Mom & Dad"
+                    value={grandmotherName}
+                    onChange={(e) => setGrandmotherName(e.target.value)}
+                    placeholder="Grandmother / Mom / Dadi"
+                    className="w-full text-[16px] text-[#1C1C1E] font-bold bg-transparent focus:outline-none placeholder:text-[#C7C7CC]"
+                  />
+                </div>
+              </div>
+
+              <div className="h-px bg-[#F2F2F7]" />
+
+              {/* Grandfather Profile Name */}
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#F2F2F7] text-[#1C1C1E] shadow-xs">
+                  <GrandfatherIcon size={20} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <label htmlFor="grandfather-name" className="text-[10.5px] font-semibold uppercase tracking-wider text-[#8E8E93] block">
+                    Grandfather's Name / Calling Label
+                  </label>
+                  <input
+                    id="grandfather-name"
+                    type="text"
+                    value={grandfatherName}
+                    onChange={(e) => setGrandfatherName(e.target.value)}
+                    placeholder="Grandfather / Dad / Dadu"
                     className="w-full text-[16px] text-[#1C1C1E] font-bold bg-transparent focus:outline-none placeholder:text-[#C7C7CC]"
                   />
                 </div>
@@ -162,12 +193,54 @@ export function Settings({
           </section>
 
           {/* ------------------------------------------------------------ */}
-          {/* Section 3: Data & Storage */}
+          {/* Section 3: Guide & Help */}
           {/* ------------------------------------------------------------ */}
           <section className="flex flex-col gap-2.5">
             <div className="px-1">
               <h2 className="text-[12.5px] font-bold uppercase tracking-wider text-[#1C1C1E]">
-                Storage & Demo
+                Guide & Instructions
+              </h2>
+            </div>
+
+            <div className="rounded-[26px] border border-[#E5E5EA] bg-white p-4 sm:p-5 shadow-xs flex items-center justify-between gap-3">
+              <div className="flex items-start gap-3 min-w-0">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#F2F2F7] text-[#1C1C1E] shadow-xs">
+                  <HelpCircle size={18} strokeWidth={2} />
+                </div>
+                <div className="min-w-0">
+                  <h4 className="text-[13.5px] font-bold text-[#1C1C1E]">
+                    How to Use Sanjeevani
+                  </h4>
+                  <p className="text-[11.5px] text-[#8E8E93] mt-0.5 leading-relaxed">
+                    Review 3D card guide explaining all features & real-life usage scenarios.
+                  </p>
+                </div>
+              </div>
+
+              {onOpenGuide && (
+                <button
+                  type="button"
+                  onClick={onOpenGuide}
+                  className="
+                    px-3.5 py-1.5 rounded-full shrink-0
+                    border border-[#E5E5EA] bg-[#F8F9FB] hover:bg-[#F2F2F7]
+                    text-[#1C1C1E] text-[11.5px] font-bold
+                    flex items-center gap-1 shadow-xs active:scale-95 transition-all
+                  "
+                >
+                  <span>Open Guide</span>
+                </button>
+              )}
+            </div>
+          </section>
+
+          {/* ------------------------------------------------------------ */}
+          {/* Section 4: Data Management */}
+          {/* ------------------------------------------------------------ */}
+          <section className="flex flex-col gap-2.5">
+            <div className="px-1">
+              <h2 className="text-[12.5px] font-bold uppercase tracking-wider text-[#1C1C1E]">
+                Data Management
               </h2>
             </div>
 
@@ -178,17 +251,17 @@ export function Settings({
                 </div>
                 <div>
                   <h4 className="text-[13.5px] font-bold text-[#1C1C1E]">
-                    Zero Login Direct Storage
+                    Direct Device Storage
                   </h4>
                   <p className="text-[11.5px] text-[#8E8E93] mt-0.5 leading-relaxed">
-                    All inventory and audit history are stored safely on this phone in local browser storage.
+                    All prescription inventory and count verifications are stored safely on this phone.
                   </p>
                 </div>
               </div>
 
               <div className="pt-2 border-t border-[#F2F2F7] flex items-center justify-between">
                 <span className="text-[11.5px] font-medium text-[#8E8E93]">
-                  Reset Demo Medicines
+                  Reset All Records
                 </span>
                 <motion.button
                   whileTap={{ scale: 0.94 }}
@@ -203,7 +276,7 @@ export function Settings({
                   "
                 >
                   <RotateCcw size={12} />
-                  <span>Restore Demo Data</span>
+                  <span>Reset All Data</span>
                 </motion.button>
               </div>
             </div>
@@ -231,12 +304,6 @@ export function Settings({
             )}
           </motion.button>
         </form>
-
-        {/* Minimalist Loving Reassurance Note */}
-        <div className="mt-2 p-3 rounded-2xl bg-white/60 border border-[#E5E5EA] text-center flex items-center justify-center gap-2 text-[12.5px] text-[#6E6E73] font-medium">
-          <Heart className="w-3.5 h-3.5 fill-[#8E8E93] text-[#8E8E93] shrink-0" />
-          <span>Zero smartphone tech needed for Grandma & Grandpa</span>
-        </div>
       </main>
     </div>
   );

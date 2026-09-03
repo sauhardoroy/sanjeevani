@@ -250,6 +250,7 @@ export function reconcileAudit(medicine, outcome, customData = null, auditDate =
     id: 'audit-' + Date.now(),
     medicineId: medicine.id,
     medicineName: medicine.name,
+    recipient: medicine.recipient || 'GRANDMOTHER',
     timestamp: new Date().toISOString(),
     outcome,
     wastedPillsCount,

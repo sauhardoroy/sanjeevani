@@ -1,20 +1,46 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { GlassTopBar } from '../components/glass/GlassTopBar';
 import { 
   CheckCircle2, 
   AlertTriangle, 
-  Calendar, 
-  FileText, 
-  Heart, 
+  Clock, 
   Edit3, 
-  Clock 
+  FileText 
 } from 'lucide-react';
+import { GrandmotherIcon, GrandfatherIcon } from '../components/icons/GrandparentIcons';
 
 /**
- * History Screen — Minimalist Apple HIG Architecture
- * Clean monochrome surfaces with restrained, quiet semantic accents.
+ * History Screen — Dual-Profile Verification Logs
+ * Grouped separately by Grandmother and Grandfather with two circles inside a pill
+ * and fluid horizontal swipe gestures.
  */
-export function History({ auditLogs = [] }) {
+export function History({ auditLogs = [], settings }) {
+  const [activeProfile, setActiveProfile] = useState('GRANDMOTHER');
+
+  // Separate audit logs by recipient
+  const { grandmaLogs, grandpaLogs } = useMemo(() => {
+    const grandma = [];
+    const grandpa = [];
+
+    auditLogs.forEach((log) => {
+      const recipient = log.recipient || (log.medicineName?.toLowerCase().includes('metformin') ? 'GRANDMOTHER' : 'GRANDFATHER');
+      if (recipient === 'GRANDMOTHER') {
+        grandma.push(log);
+      } else {
+        grandpa.push(log);
+      }
+    });
+
+    return { grandmaLogs: grandma, grandpaLogs: grandpa };
+  }, [auditLogs]);
+
+  const currentPersonName = activeProfile === 'GRANDMOTHER'
+    ? (settings?.grandmotherName || 'Grandmother')
+    : (settings?.grandfatherName || 'Grandfather');
+
+  const currentLogs = activeProfile === 'GRANDMOTHER' ? grandmaLogs : grandpaLogs;
+
   const formatDate = (isoString) => {
     if (!isoString) return 'Recent';
     const d = new Date(isoString);
@@ -36,161 +62,301 @@ export function History({ auditLogs = [] }) {
     });
   };
 
-  // Compute summary stats
+  // Compute stats for the active grandparent
   const { matchedCount, anomaliesCount } = useMemo(() => {
     let matched = 0;
     let anomalies = 0;
-    auditLogs.forEach((log) => {
+    currentLogs.forEach((log) => {
       if (log.outcome === 'MATCHES_EXPECTED') matched += 1;
       else anomalies += 1;
     });
     return { matchedCount: matched, anomaliesCount: anomalies };
-  }, [auditLogs]);
+  }, [currentLogs]);
+
+  // Handle swipe gestures
+  const handleDragEnd = (_, info) => {
+    const swipeThreshold = 50;
+    if (info.offset.x < -swipeThreshold && activeProfile === 'GRANDMOTHER') {
+      setActiveProfile('GRANDFATHER');
+    } else if (info.offset.x > swipeThreshold && activeProfile === 'GRANDFATHER') {
+      setActiveProfile('GRANDMOTHER');
+    }
+  };
+
+  const subtitle = `${currentLogs.length} verification record${currentLogs.length === 1 ? '' : 's'} for ${currentPersonName}`;
 
   return (
     <div className="min-h-screen bg-[#F2F2F7] flex flex-col pb-28">
+      {/* Functional Glass Top Bar */}
       <GlassTopBar
         title="Audit History"
-        subtitle="Past weekend checks and reconciliation logs"
+        subtitle={subtitle}
       />
 
-      <main className="p-4 max-w-lg mx-auto w-full flex flex-col gap-5">
-        {/* 1. Apple 3-Column Metric Pod (Restrained Monochrome) */}
-        <div className="rounded-[26px] border border-[#E5E5EA] bg-white p-4 shadow-xs">
-          <div className="grid grid-cols-3 divide-x divide-[#E5E5EA] text-center">
-            <div className="px-2">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-[#8E8E93] block">
-                Total Logs
-              </span>
-              <span className="text-[19px] font-bold text-[#1C1C1E] tabular-nums mt-0.5 block">
-                {auditLogs.length}
-              </span>
-            </div>
+      {/* ------------------------------------------------------------------ */}
+      {/* Two Circles Inside a Pill (Grandmother & Grandfather) */}
+      {/* ------------------------------------------------------------------ */}
+      <div className="mx-auto w-fit flex flex-col items-center justify-center pt-3 pb-1 select-none">
+        <div className="relative flex items-center gap-1 rounded-full border-[1.6px] border-[#E5E5EA] bg-white/95 backdrop-blur-3xl p-1 shadow-xs">
+          
+          {/* Circle Option 1: Grandmother */}
+          <button
+            type="button"
+            onClick={() => setActiveProfile('GRANDMOTHER')}
+            aria-label={settings?.grandmotherName || 'Grandmother'}
+            title={settings?.grandmotherName || 'Grandmother'}
+            className="group relative h-10 w-10 rounded-full flex items-center justify-center outline-none transition-colors focus:outline-none"
+          >
+            {activeProfile === 'GRANDMOTHER' && (
+              <motion.div
+                layoutId="active-history-circle"
+                transition={{
+                  type: 'spring',
+                  stiffness: 280,
+                  damping: 25,
+                  mass: 0.8,
+                }}
+                className="absolute inset-0 rounded-full bg-[#1C1C1E] shadow-xs"
+              />
+            )}
 
-            <div className="px-2">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-[#8E8E93] block">
-                Count Matched
-              </span>
-              <span className="text-[19px] font-bold text-[#1C1C1E] tabular-nums mt-0.5 block">
-                {matchedCount}
-              </span>
-            </div>
+            <motion.div
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+              animate={{
+                filter: activeProfile === 'GRANDMOTHER'
+                  ? ['blur(0px)', 'blur(4px)', 'blur(0px)']
+                  : 'blur(0px)',
+              }}
+              className="relative z-10 flex items-center justify-center"
+            >
+              <motion.div
+                animate={{ scale: activeProfile === 'GRANDMOTHER' ? 1.05 : 1 }}
+                transition={{ scale: { type: 'spring', stiffness: 300, damping: 15 } }}
+                className="flex items-center justify-center"
+              >
+                <GrandmotherIcon 
+                  size={20} 
+                  className={`transition-colors duration-200 ${
+                    activeProfile === 'GRANDMOTHER' 
+                      ? 'text-white' 
+                      : 'text-[#8E8E93] group-hover:text-[#1C1C1E]'
+                  }`} 
+                />
+              </motion.div>
+            </motion.div>
+          </button>
 
-            <div className="px-2">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-[#8E8E93] block">
-                Adjusted / Early
-              </span>
-              <span className="text-[19px] font-bold text-[#1C1C1E] tabular-nums mt-0.5 block">
-                {anomaliesCount}
-              </span>
-            </div>
-          </div>
+          {/* Circle Option 2: Grandfather */}
+          <button
+            type="button"
+            onClick={() => setActiveProfile('GRANDFATHER')}
+            aria-label={settings?.grandfatherName || 'Grandfather'}
+            title={settings?.grandfatherName || 'Grandfather'}
+            className="group relative h-10 w-10 rounded-full flex items-center justify-center outline-none transition-colors focus:outline-none"
+          >
+            {activeProfile === 'GRANDFATHER' && (
+              <motion.div
+                layoutId="active-history-circle"
+                transition={{
+                  type: 'spring',
+                  stiffness: 280,
+                  damping: 25,
+                  mass: 0.8,
+                }}
+                className="absolute inset-0 rounded-full bg-[#1C1C1E] shadow-xs"
+              />
+            )}
+
+            <motion.div
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+              animate={{
+                filter: activeProfile === 'GRANDFATHER'
+                  ? ['blur(0px)', 'blur(4px)', 'blur(0px)']
+                  : 'blur(0px)',
+              }}
+              className="relative z-10 flex items-center justify-center"
+            >
+              <motion.div
+                animate={{ scale: activeProfile === 'GRANDFATHER' ? 1.05 : 1 }}
+                transition={{ scale: { type: 'spring', stiffness: 300, damping: 15 } }}
+                className="flex items-center justify-center"
+              >
+                <GrandfatherIcon 
+                  size={20} 
+                  className={`transition-colors duration-200 ${
+                    activeProfile === 'GRANDFATHER' 
+                      ? 'text-white' 
+                      : 'text-[#8E8E93] group-hover:text-[#1C1C1E]'
+                  }`} 
+                />
+              </motion.div>
+            </motion.div>
+          </button>
         </div>
 
-        {/* 2. Section Header (Clean Apple Text) */}
-        <div className="flex items-center justify-between px-1">
-          <h2 className="text-[12.5px] font-bold uppercase tracking-wider text-[#1C1C1E]">
-            Logged Verifications
-          </h2>
-          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#E5E5EA] text-[#1C1C1E]">
-            {auditLogs.length}
-          </span>
+        {/* Quiet Sub-label Indicating Current Profile & Swipe Gesture */}
+        <div className="flex items-center gap-2 pt-1.5 text-[11.5px] font-semibold text-[#8E8E93]">
+          <span className="text-[#1C1C1E]">{currentPersonName}</span>
+          <span>•</span>
+          <span className="font-normal">Swipe to switch</span>
         </div>
+      </div>
 
-        {/* 3. Logged Cards */}
-        {auditLogs.length > 0 ? (
-          <div className="flex flex-col gap-3">
-            {auditLogs.map((log) => {
-              const isMatched = log.outcome === 'MATCHES_EXPECTED';
-              const isAdjusted = log.outcome === 'COUNT_ADJUSTED';
+      {/* ------------------------------------------------------------------ */}
+      {/* Swipeable Screen Content */}
+      {/* ------------------------------------------------------------------ */}
+      <motion.main
+        drag="x"
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={0.15}
+        onDragEnd={handleDragEnd}
+        className="p-4 max-w-lg mx-auto w-full flex-1 flex flex-col gap-5 touch-pan-y"
+      >
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={activeProfile}
+            initial={{ opacity: 0, x: activeProfile === 'GRANDFATHER' ? 40 : -40 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: activeProfile === 'GRANDFATHER' ? -40 : 40 }}
+            transition={{ type: 'spring', stiffness: 360, damping: 30 }}
+            className="flex flex-col gap-5 w-full"
+          >
+            {/* 1. Apple 3-Column Metric Pod for Current Grandparent */}
+            <div className="rounded-[26px] border border-[#E5E5EA] bg-white p-4 shadow-xs">
+              <div className="grid grid-cols-3 divide-x divide-[#E5E5EA] text-center">
+                <div className="px-2">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-[#8E8E93] block">
+                    Total Logs
+                  </span>
+                  <span className="text-[19px] font-bold text-[#1C1C1E] tabular-nums mt-0.5 block">
+                    {currentLogs.length}
+                  </span>
+                </div>
 
-              return (
-                <div
-                  key={log.id}
-                  className="
-                    rounded-[26px] border border-[#E5E5EA] bg-white p-4 sm:p-5
-                    shadow-xs flex flex-col gap-3
-                  "
-                >
-                  {/* Top Row: Squircle Icon + Medicine Name + Outcome Badge */}
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      {/* Quiet Monochrome Icon Container */}
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#F2F2F7] text-[#1C1C1E] shadow-xs">
-                        {isMatched && <CheckCircle2 size={18} strokeWidth={2} />}
-                        {isAdjusted && <Edit3 size={18} strokeWidth={2} />}
-                        {!isMatched && !isAdjusted && <AlertTriangle size={18} strokeWidth={2} />}
+                <div className="px-2">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-[#8E8E93] block">
+                    Count Matched
+                  </span>
+                  <span className="text-[19px] font-bold text-[#1C1C1E] tabular-nums mt-0.5 block">
+                    {matchedCount}
+                  </span>
+                </div>
+
+                <div className="px-2">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-[#8E8E93] block">
+                    Adjusted
+                  </span>
+                  <span className="text-[19px] font-bold text-[#1C1C1E] tabular-nums mt-0.5 block">
+                    {anomaliesCount}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* 2. Section Header */}
+            <div className="flex items-center justify-between px-1">
+              <h2 className="text-[12.5px] font-bold uppercase tracking-wider text-[#1C1C1E]">
+                {currentPersonName}'s Verifications
+              </h2>
+              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#E5E5EA] text-[#1C1C1E]">
+                {currentLogs.length}
+              </span>
+            </div>
+
+            {/* 3. Logged Cards */}
+            {currentLogs.length > 0 ? (
+              <div className="flex flex-col gap-3">
+                {currentLogs.map((log) => {
+                  const isMatched = log.outcome === 'MATCHES_EXPECTED';
+                  const isAdjusted = log.outcome === 'COUNT_ADJUSTED';
+
+                  return (
+                    <div
+                      key={log.id}
+                      className="
+                        rounded-[26px] border border-[#E5E5EA] bg-white p-4 sm:p-5
+                        shadow-xs flex flex-col gap-3
+                      "
+                    >
+                      {/* Top Row: Squircle Icon + Medicine Name + Outcome Badge */}
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#F2F2F7] text-[#1C1C1E] shadow-xs">
+                            {isMatched && <CheckCircle2 size={18} strokeWidth={2} />}
+                            {isAdjusted && <Edit3 size={18} strokeWidth={2} />}
+                            {!isMatched && !isAdjusted && <AlertTriangle size={18} strokeWidth={2} />}
+                          </div>
+
+                          <div className="min-w-0">
+                            <h4 className="truncate text-[16px] font-bold tracking-tight text-[#1C1C1E]">
+                              {log.medicineName}
+                            </h4>
+                            <span className="text-[11px] font-medium text-[#8E8E93] flex items-center gap-1 mt-0.5">
+                              <Clock size={11} />
+                              <span>{formatDate(log.timestamp)}</span>
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Status Badge */}
+                        <div className="flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 bg-[#F8F9FB] border border-[#E5E5EA] text-[#1C1C1E] text-xs font-semibold shadow-xs">
+                          <span className={`w-2 h-2 rounded-full ${
+                            isMatched ? 'bg-[#34C759]' : isAdjusted ? 'bg-[#007AFF]' : 'bg-[#FF9F0A]'
+                          }`} />
+                          <span>
+                            {isMatched 
+                              ? 'Count Matched' 
+                              : isAdjusted 
+                              ? 'Count Adjusted' 
+                              : 'Discarded Early'
+                            }
+                          </span>
+                        </div>
                       </div>
 
-                      <div className="min-w-0">
-                        <h4 className="truncate text-[16px] font-bold tracking-tight text-[#1C1C1E]">
-                          {log.medicineName}
-                        </h4>
-                        <span className="text-[11px] font-medium text-[#8E8E93] flex items-center gap-1 mt-0.5">
-                          <Clock size={11} />
-                          <span>{formatDate(log.timestamp)}</span>
-                        </span>
-                      </div>
-                    </div>
+                      {/* Detail Note */}
+                      {log.note && (
+                        <div className="rounded-xl bg-[#F8F9FB] border border-[#E5E5EA] px-3.5 py-2.5 text-[12px] text-[#1C1C1E] leading-relaxed">
+                          {log.note}
+                        </div>
+                      )}
 
-                    {/* Apple Status Badge with Quiet Dot */}
-                    <div className="flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 bg-[#F8F9FB] border border-[#E5E5EA] text-[#1C1C1E] text-xs font-semibold shadow-xs">
-                      <span className={`w-2 h-2 rounded-full ${
-                        isMatched ? 'bg-[#34C759]' : isAdjusted ? 'bg-[#007AFF]' : 'bg-[#FF9F0A]'
-                      }`} />
-                      <span>
-                        {isMatched 
-                          ? 'Count Matched' 
-                          : isAdjusted 
-                          ? 'Count Adjusted' 
-                          : 'Discarded Early'
-                        }
-                      </span>
+                      {/* Inventory snapshot row */}
+                      {(log.fullStripsRemaining !== undefined || log.pillsOnActiveStrip !== undefined) && (
+                        <div className="pt-1.5 border-t border-[#F2F2F7] flex items-center justify-between text-[11px] text-[#8E8E93]">
+                          <span>
+                            Active: <strong className="text-[#1C1C1E]">{log.pillsOnActiveStrip ?? 0} pills</strong>
+                          </span>
+                          <span>
+                            Unopened: <strong className="text-[#1C1C1E]">{log.fullStripsRemaining ?? 0} full strips</strong>
+                          </span>
+                        </div>
+                      )}
                     </div>
-                  </div>
-
-                  {/* Inset Detail Pod */}
-                  {log.note && (
-                    <div className="rounded-xl bg-[#F8F9FB] border border-[#E5E5EA] px-3.5 py-2.5 text-[12px] text-[#1C1C1E] leading-relaxed">
-                      {log.note}
-                    </div>
-                  )}
-
-                  {/* Inventory snapshot row */}
-                  {(log.fullStripsRemaining !== undefined || log.pillsOnActiveStrip !== undefined) && (
-                    <div className="pt-1.5 border-t border-[#F2F2F7] flex items-center justify-between text-[11px] text-[#8E8E93]">
-                      <span>
-                        Active: <strong className="text-[#1C1C1E]">{log.pillsOnActiveStrip ?? 0} pills</strong>
-                      </span>
-                      <span>
-                        Unopened: <strong className="text-[#1C1C1E]">{log.fullStripsRemaining ?? 0} full strips</strong>
-                      </span>
-                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              /* Empty State for this Grandparent */
+              <div className="mt-8 flex flex-col items-center text-center p-8 bg-white rounded-3xl border border-[#E5E5EA] shadow-xs">
+                <div className="w-14 h-14 rounded-full bg-[#F2F2F7] flex items-center justify-center text-[#1C1C1E] mb-3">
+                  {activeProfile === 'GRANDMOTHER' ? (
+                    <GrandmotherIcon size={28} />
+                  ) : (
+                    <GrandfatherIcon size={28} />
                   )}
                 </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="mt-8 flex flex-col items-center text-center p-8 bg-white rounded-3xl border border-[#E5E5EA] shadow-xs">
-            <div className="w-14 h-14 rounded-full bg-[#F2F2F7] flex items-center justify-center text-[#1C1C1E] mb-3">
-              <FileText className="w-7 h-7" />
-            </div>
-            <h3 className="text-[18px] font-bold text-[#1C1C1E] mb-1">
-              No Audit Logs Yet
-            </h3>
-            <p className="text-[13.5px] text-[#6E6E73] max-w-xs leading-relaxed">
-              When you visit Mom & Dad and verify counts, records will appear here.
-            </p>
-          </div>
-        )}
-
-        {/* Minimalist Loving Reassurance Note */}
-        <div className="mt-2 p-3 rounded-2xl bg-white/60 border border-[#E5E5EA] text-center flex items-center justify-center gap-2 text-[12.5px] text-[#6E6E73] font-medium">
-          <Heart className="w-3.5 h-3.5 fill-[#8E8E93] text-[#8E8E93] shrink-0" />
-          <span>Zero smartphone tech needed for Grandma & Grandpa</span>
-        </div>
-      </main>
+                <h3 className="text-[18px] font-bold text-[#1C1C1E] mb-1">
+                  No Audit Logs for {currentPersonName}
+                </h3>
+                <p className="text-[13.5px] text-[#6E6E73] max-w-xs leading-relaxed">
+                  When you visit {currentPersonName} and verify physical pill counts, logs will appear here.
+                </p>
+              </div>
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </motion.main>
     </div>
   );
 }

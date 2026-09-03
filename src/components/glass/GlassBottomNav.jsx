@@ -2,19 +2,10 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { Home, ClipboardList, Settings } from 'lucide-react';
 
-const DROPLET_SPRING = {
-  type: 'spring',
-  stiffness: 460,
-  damping: 30,
-  mass: 0.8,
-};
-
 /**
- * GlassBottomNav — Pill-Shaped Liquid Droplet Architecture
- * - 100% stable fixed dock dimensions (zero jumping or shifting)
- * - Ultra-high opacity Apple frosted glass material (bg-white/95)
- * - Fluid liquid droplet indicator that slides smoothly between tabs via layoutId
- * - Clean pill shape with zero distracting gloss sweep
+ * GlassBottomNav — FluidTabs Architecture
+ * Floating pill with spring sliding active indicator, blur-pulse animation,
+ * and high-opacity frosted Apple glass.
  */
 export function GlassBottomNav({ currentTab, onSelectTab }) {
   const tabs = [
@@ -40,62 +31,62 @@ export function GlassBottomNav({ currentTab, onSelectTab }) {
       aria-label="Main navigation"
       className="fixed bottom-5 inset-x-0 z-40 mx-auto w-fit flex items-center justify-center pointer-events-auto select-none"
     >
-      {/* Pill-Shaped Frosted Glass Panel (Increased Opacity & Hairline Border) */}
-      <div
-        className="
-          relative flex items-center justify-center gap-1 p-1.5
-          rounded-full bg-white/95 backdrop-blur-3xl
-          border border-white/90
-          shadow-[0_12px_36px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.04)]
-        "
-      >
+      <div className="relative flex items-center gap-1 rounded-full border-[1.6px] border-white/80 bg-white/75 backdrop-blur-2xl px-1.5 py-1.5 shadow-[0_12px_36px_rgba(0,0,0,0.08),0_2px_8px_rgba(0,0,0,0.03)] sm:gap-2">
         {tabs.map((tab) => {
-          const Icon = tab.icon;
           const isActive = currentTab === tab.id;
+          const Icon = tab.icon;
 
           return (
-            <motion.button
+            <button
               key={tab.id}
               type="button"
-              whileTap={{ scale: 0.92 }}
               onClick={() => onSelectTab?.(tab.id)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  onSelectTab?.(tab.id);
-                }
-              }}
-              className={`
-                relative h-10 px-4 rounded-full
-                flex items-center justify-center gap-2
-                text-[13px] font-bold tracking-tight
-                transition-colors duration-200 focus:outline-none
-                ${isActive ? 'text-white' : 'text-[#8E8E93] hover:text-[#1C1C1E]'}
-              `}
+              className="group relative rounded-full px-3.5 py-2 outline-none sm:px-4 sm:py-2.5 transition-colors focus:outline-none"
             >
-              {/* Fluid Liquid Droplet Indicator */}
               {isActive && (
                 <motion.div
-                  layoutId="activeNavDroplet"
-                  transition={DROPLET_SPRING}
-                  className="
-                    absolute inset-0 rounded-full
-                    bg-[#1C1C1E]
-                    shadow-[0_2px_8px_rgba(0,0,0,0.18)]
-                  "
+                  layoutId="active-pill"
+                  transition={{
+                    type: 'spring',
+                    stiffness: 280,
+                    damping: 25,
+                    mass: 0.8,
+                  }}
+                  className="absolute inset-0 rounded-full bg-[#1C1C1E] shadow-xs"
                 />
               )}
 
-              {/* Tab Icon (Elevated above droplet) */}
-              <span className="relative z-10 flex items-center justify-center">
-                <Icon size={17} strokeWidth={isActive ? 2.5 : 2} />
-              </span>
+              <motion.div
+                transition={{
+                  duration: 0.3,
+                  ease: 'easeOut',
+                }}
+                animate={{
+                  filter: isActive
+                    ? ['blur(0px)', 'blur(4px)', 'blur(0px)']
+                    : 'blur(0px)',
+                }}
+                className={`relative z-10 flex items-center gap-2 transition-colors duration-200 ${
+                  isActive
+                    ? 'text-white font-bold'
+                    : 'text-[#8E8E93] hover:text-[#1C1C1E] font-semibold'
+                }`}
+              >
+                <motion.div
+                  animate={{ scale: isActive ? 1.03 : 1 }}
+                  transition={{
+                    scale: { type: 'spring', stiffness: 300, damping: 15 },
+                  }}
+                  className="flex shrink-0 items-center justify-center"
+                >
+                  <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
+                </motion.div>
 
-              {/* Tab Label (Elevated above droplet) */}
-              <span className="relative z-10 font-bold whitespace-nowrap">
-                {tab.label}
-              </span>
-            </motion.button>
+                <span className="text-[13px] tracking-tight whitespace-nowrap sm:text-sm">
+                  {tab.label}
+                </span>
+              </motion.div>
+            </button>
           );
         })}
       </div>

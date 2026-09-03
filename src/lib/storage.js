@@ -24,6 +24,8 @@ export const INITIAL_DEMO_DATA = {
   settings: {
     caregiverName: 'Dad',
     grandparentsName: 'Mom & Dad',
+    grandmotherName: 'Grandmother',
+    grandfatherName: 'Grandfather',
     grandparentsPhone: '+91 98765 43210',
     checkinReminderTime: '09:00',
   },
@@ -31,6 +33,7 @@ export const INITIAL_DEMO_DATA = {
     {
       id: 'med-01',
       name: 'Metformin 500mg',
+      recipient: 'GRANDMOTHER',
       purpose: 'Sugar / Diabetes',
       imageUrl: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=1000',
       schedule: {
@@ -51,6 +54,7 @@ export const INITIAL_DEMO_DATA = {
     {
       id: 'med-02',
       name: 'Telmisartan 40mg',
+      recipient: 'GRANDFATHER',
       purpose: 'Blood Pressure',
       imageUrl: 'https://images.unsplash.com/photo-1471864190281-a93a3070b6de?auto=format&fit=crop&q=80&w=1000',
       schedule: {
@@ -71,6 +75,7 @@ export const INITIAL_DEMO_DATA = {
     {
       id: 'med-03',
       name: 'Eco-sprin 75mg',
+      recipient: 'GRANDFATHER',
       purpose: 'Heart & Circulation',
       imageUrl: 'https://images.unsplash.com/photo-1550572017-edd951aa8f72?auto=format&fit=crop&q=80&w=1000',
       schedule: {
@@ -89,30 +94,7 @@ export const INITIAL_DEMO_DATA = {
       }
     }
   ],
-  auditLogs: [
-    {
-      id: 'log-01',
-      medicineId: 'med-01',
-      medicineName: 'Metformin 500mg',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(),
-      outcome: 'MATCHES_EXPECTED',
-      wastedPillsCount: 0,
-      fullStripsRemaining: 3,
-      pillsOnActiveStrip: 8,
-      note: 'Weekend visit: count matched expected consumption'
-    },
-    {
-      id: 'log-02',
-      medicineId: 'med-02',
-      medicineName: 'Telmisartan 40mg',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString(),
-      outcome: 'STRIP_DISCARDED_EARLY',
-      wastedPillsCount: 4,
-      fullStripsRemaining: 2,
-      pillsOnActiveStrip: 14,
-      note: 'Found silver strip discarded with 4 pills remaining; opened fresh strip'
-    }
-  ]
+  auditLogs: []
 };
 
 // Simple event-emitter for reactive updates across components
@@ -136,12 +118,31 @@ export function getData() {
       return INITIAL_DEMO_DATA;
     }
     const parsed = JSON.parse(raw);
-    // Ensure demo medicines have imageUrls even if stored previously without them
     if (Array.isArray(parsed.medicines)) {
       parsed.medicines = parsed.medicines.map(m => ({
         ...m,
-        imageUrl: m.imageUrl || getMedicineImage(m)
+        imageUrl: m.imageUrl || getMedicineImage(m),
+        recipient: m.recipient || (m.name?.toLowerCase().includes('metformin') ? 'GRANDMOTHER' : 'GRANDFATHER')
       }));
+    }
+    if (Array.isArray(parsed.auditLogs)) {
+      parsed.auditLogs = parsed.auditLogs.map(log => {
+        if (!log.recipient) {
+          const med = parsed.medicines?.find(m => m.id === log.medicineId);
+          return {
+            ...log,
+            recipient: med?.recipient || (log.medicineName?.toLowerCase().includes('metformin') ? 'GRANDMOTHER' : 'GRANDFATHER')
+          };
+        }
+        return log;
+      });
+    }
+    if (parsed.settings) {
+      parsed.settings = {
+        grandmotherName: 'Grandmother',
+        grandfatherName: 'Grandfather',
+        ...parsed.settings
+      };
     }
     return parsed;
   } catch (err) {

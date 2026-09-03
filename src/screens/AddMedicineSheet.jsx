@@ -10,9 +10,11 @@ import {
   Layers, 
   Check, 
   Sparkles,
-  Info
+  Info,
+  User
 } from 'lucide-react';
 import { RollingStepper } from '../components/content/RollingStepper';
+import { GrandmotherIcon, GrandfatherIcon } from '../components/icons/GrandparentIcons';
 
 const SPRING_CONFIG = {
   type: 'spring',
@@ -32,9 +34,23 @@ const TAB_SPRING = {
  * Features 3D rolling steppers, Apple toggle switches, sliding segmented pill tabs,
  * and concentric rounded geometry.
  */
-export function AddMedicineSheet({ isOpen, onClose, onSave }) {
+export function AddMedicineSheet({ 
+  isOpen, 
+  onClose, 
+  onSave, 
+  initialRecipient = 'GRANDMOTHER', 
+  settings 
+}) {
+  const [recipient, setRecipient] = useState(initialRecipient);
   const [name, setName] = useState('');
   const [purpose, setPurpose] = useState('');
+
+  // Sync recipient with active tab
+  React.useEffect(() => {
+    if (initialRecipient) {
+      setRecipient(initialRecipient);
+    }
+  }, [initialRecipient, isOpen]);
 
   // Daily Schedule Slots (Apple Toggle Switches)
   const [slots, setSlots] = useState({
@@ -90,6 +106,7 @@ export function AddMedicineSheet({ isOpen, onClose, onSave }) {
     const newMed = {
       id: 'med-' + Date.now(),
       name: name.trim(),
+      recipient,
       purpose: purpose.trim(),
       schedule: {
         timeOfDay,
@@ -184,6 +201,60 @@ export function AddMedicineSheet({ isOpen, onClose, onSave }) {
 
             {/* Scrollable Form Body */}
             <form onSubmit={handleSubmit} className="p-6 overflow-y-auto overscroll-contain flex flex-col gap-5">
+              {/* Profile Recipient Selector */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[12px] font-bold text-[#8E8E93] uppercase tracking-wider block">
+                  Prescription For *
+                </label>
+                <div className="flex p-1 rounded-2xl bg-[#F2F2F7] border border-[#E5E5EA]">
+                  <button
+                    type="button"
+                    onClick={() => setRecipient('GRANDMOTHER')}
+                    className={`
+                      relative flex-1 py-2 px-3 rounded-xl
+                      flex items-center justify-center gap-2
+                      text-xs font-bold transition-all focus:outline-none
+                      ${recipient === 'GRANDMOTHER' ? 'text-[#1C1C1E]' : 'text-[#8E8E93] hover:text-[#1C1C1E]'}
+                    `}
+                  >
+                    {recipient === 'GRANDMOTHER' && (
+                      <motion.div
+                        layoutId="addRecipientSegment"
+                        transition={TAB_SPRING}
+                        className="absolute inset-0 rounded-xl bg-white shadow-xs border border-[#E5E5EA]"
+                      />
+                    )}
+                    <div className="relative z-10 flex h-6 w-6 items-center justify-center rounded-full bg-[#F2F2F7] text-[#1C1C1E]">
+                      <GrandmotherIcon size={14} />
+                    </div>
+                    <span className="relative z-10">{settings?.grandmotherName || 'Grandmother'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setRecipient('GRANDFATHER')}
+                    className={`
+                      relative flex-1 py-2 px-3 rounded-xl
+                      flex items-center justify-center gap-2
+                      text-xs font-bold transition-all focus:outline-none
+                      ${recipient === 'GRANDFATHER' ? 'text-[#1C1C1E]' : 'text-[#8E8E93] hover:text-[#1C1C1E]'}
+                    `}
+                  >
+                    {recipient === 'GRANDFATHER' && (
+                      <motion.div
+                        layoutId="addRecipientSegment"
+                        transition={TAB_SPRING}
+                        className="absolute inset-0 rounded-xl bg-white shadow-xs border border-[#E5E5EA]"
+                      />
+                    )}
+                    <div className="relative z-10 flex h-6 w-6 items-center justify-center rounded-full bg-[#F2F2F7] text-[#1C1C1E]">
+                      <GrandfatherIcon size={14} />
+                    </div>
+                    <span className="relative z-10">{settings?.grandfatherName || 'Grandfather'}</span>
+                  </button>
+                </div>
+              </div>
+
               {/* Section 1: Medicine Identity */}
               <div className="flex flex-col gap-3.5">
                 <div>
