@@ -1,36 +1,53 @@
-import React from 'react';
-import { motion } from 'motion/react';
-import { MessageCircle, ChevronRight, AlertTriangle, ShieldCheck, Clock } from 'lucide-react';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { 
+  Pill, 
+  MessageCircle, 
+  ChevronDown, 
+  AlertCircle, 
+  CheckCircle2,
+  Trash2,
+  Calendar,
+  Layers,
+  Info
+} from 'lucide-react';
 import { evaluateMedicineStatus } from '../../lib/depletion';
 import { getWhatsAppUrl } from '../../lib/whatsapp';
-import { getMedicineImage } from '../../lib/storage';
 
 /**
- * MedicineCard — Modern Expandable Card for Home Dashboard
- * Inspired by Watermelon UI Profile Card: rich visual imagery, smooth hover scaling,
- * dark gradient overlay, and floating traffic-light status pill.
+ * MedicineCard — Modern Minimalist Apple HIG Card with Inline Accordion
+ * Displays all details and caregiver actions directly inside the card when expanded.
+ * No modal dialog needed.
  */
-export function MedicineCard({ medicine, onSelect, settings }) {
+export function MedicineCard({ 
+  medicine, 
+  settings, 
+  onAudit, 
+  onDelete 
+}) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const status = evaluateMedicineStatus(medicine);
-  const imageSrc = getMedicineImage(medicine);
 
   const statusThemes = {
     green: {
-      bar: 'bg-[#34C759]',
-      badgeBg: 'bg-[#34C759]/90 text-white',
-      dot: '🟢',
-      label: 'Safe'
+      dotColor: 'bg-[#34C759]',
+      badgeBg: 'bg-[#EBF9EE]',
+      badgeBorder: 'border-[#34C759]/25',
+      badgeText: 'text-[#15803D]',
+      label: 'Safe Supply'
     },
     amber: {
-      bar: 'bg-[#FF9F0A]',
-      badgeBg: 'bg-[#FF9F0A]/95 text-white',
-      dot: '🟡',
-      label: 'Call Grandparents'
+      dotColor: 'bg-[#FF9F0A]',
+      badgeBg: 'bg-[#FFF8EB]',
+      badgeBorder: 'border-[#FF9F0A]/30',
+      badgeText: 'text-[#B45309]',
+      label: 'Drop-Zone'
     },
     red: {
-      bar: 'bg-[#FF3B30]',
-      badgeBg: 'bg-[#FF3B30]/95 text-white',
-      dot: '🔴',
+      dotColor: 'bg-[#FF3B30]',
+      badgeBg: 'bg-[#FEEFEF]',
+      badgeBorder: 'border-[#FF3B30]/30',
+      badgeText: 'text-[#B91C1C]',
       label: 'Refill Now'
     }
   };
@@ -38,7 +55,7 @@ export function MedicineCard({ medicine, onSelect, settings }) {
   const currentTheme = statusThemes[status.color] || statusThemes.green;
 
   const handleWhatsApp = (e) => {
-    e.stopPropagation();
+    if (e) e.stopPropagation();
     const url = getWhatsAppUrl(medicine, status, settings);
     window.open(url, '_blank');
   };
@@ -49,99 +66,271 @@ export function MedicineCard({ medicine, onSelect, settings }) {
 
   return (
     <motion.div
-      onClick={() => onSelect(medicine)}
-      whileHover="hover"
-      whileTap={{ scale: 0.98 }}
+      layout
+      transition={{ layout: { duration: 0.3, type: 'spring', bounce: 0.1 } }}
       className="
-        cursor-pointer relative h-60 w-full overflow-hidden
-        rounded-2xl border border-black/10 shadow-md group
-        transition-all duration-300
+        w-full bg-white rounded-[24px]
+        border border-[#E5E5EA]
+        shadow-[0_2px_12px_rgba(0,0,0,0.04)]
+        overflow-hidden transition-all
       "
     >
-      {/* Background Image with Hover Scale */}
-      <motion.img
-        src={imageSrc}
-        alt={medicine.name}
-        className="absolute inset-0 h-full w-full object-cover"
-        variants={{
-          hover: { scale: 1.06 }
-        }}
-        transition={{ duration: 0.35, ease: 'easeOut' }}
-      />
+      {/* Top Header Area (Clickable to toggle accordion) */}
+      <div 
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="p-5 pb-3.5 cursor-pointer flex flex-col gap-3.5"
+      >
+        {/* Row 1: Icon + Title & Status Badge */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start gap-3 flex-1 min-w-0">
+            {/* Apple Squircle Icon Container */}
+            <div className="
+              w-11 h-11 rounded-2xl bg-[#F2F2F7]
+              flex items-center justify-center shrink-0 text-[#1C1C1E]
+            ">
+              <Pill className="w-5 h-5 stroke-[2]" />
+            </div>
 
-      {/* Modern Gradient Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-transparent opacity-90 group-hover:opacity-100 transition-opacity" />
+            <div className="flex flex-col min-w-0">
+              <h3 className="text-[19px] font-bold tracking-tight text-[#1C1C1E] leading-snug truncate">
+                {medicine.name}
+              </h3>
+              <p className="text-[13px] font-medium text-[#8E8E93] truncate mt-0.5">
+                {medicine.purpose || 'Medication'} • {scheduleSummary}
+              </p>
+            </div>
+          </div>
 
-      {/* Top Bar: 4px Accent Indicator & Status Pill */}
-      <div className="absolute top-0 inset-x-0 p-3.5 flex items-center justify-between z-10">
-        {/* Traffic Light Status Capsule */}
-        <div className={`
-          flex items-center gap-1.5 px-3 py-1 rounded-full
-          backdrop-blur-md text-xs font-bold tracking-wide shadow-md
-          border border-white/25 ${currentTheme.badgeBg}
-        `}>
-          <span>{currentTheme.dot}</span>
-          <span>{status.badgeText}</span>
+          {/* Restrained Apple Status Badge */}
+          <div className={`
+            shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full
+            border ${currentTheme.badgeBg} ${currentTheme.badgeBorder}
+          `}>
+            <span className={`w-2 h-2 rounded-full ${currentTheme.dotColor}`} />
+            <span className={`text-[12.5px] font-bold ${currentTheme.badgeText} leading-none`}>
+              {status.badgeText}
+            </span>
+          </div>
         </div>
 
-        {/* Quick Stock Indicator Badge */}
-        <div className="px-2.5 py-1 rounded-full bg-black/45 backdrop-blur-md border border-white/20 text-white/90 text-xs font-medium">
-          {status.fullStripsRemaining} strips • {status.pillsOnActiveStrip} pills
-        </div>
-      </div>
-
-      {/* Bottom Content Area */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5 w-full z-10 flex flex-col gap-2">
-        <div>
-          {/* Subtitle / Category */}
-          <p className="text-sky-300 text-xs font-bold tracking-wider uppercase mb-0.5 drop-shadow-sm">
-            {medicine.purpose || 'Medication'} • {scheduleSummary}
-          </p>
-
-          {/* Title */}
-          <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-white leading-snug drop-shadow-md">
-            {medicine.name}
-          </h3>
-        </div>
-
-        {/* Warning Badge if Amber or Red */}
-        {status.warningLine ? (
+        {/* Warning Notice if in Drop Zone or Refill */}
+        {status.warningLine && (
           <div className="
-            py-1 px-2.5 rounded-lg bg-[#FF9F0A]/25 backdrop-blur-sm border border-[#FF9F0A]/40
-            text-amber-200 text-xs font-medium flex items-center gap-1.5
+            px-3.5 py-2.5 rounded-xl bg-[#FFF8EB] border border-[#FF9F0A]/25
+            text-[12.5px] text-[#92400E] font-medium leading-relaxed
+            flex items-center gap-2
           ">
-            <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-[#FF9F0A]" />
+            <AlertCircle className="w-4 h-4 text-[#D97706] shrink-0 stroke-[2]" />
             <span className="truncate">{status.warningLine}</span>
           </div>
-        ) : (
-          <p className="text-white/70 text-xs">
-            Safe supply: {status.safeDays} days remaining
-          </p>
         )}
 
-        {/* Action Row */}
-        <div className="pt-2 border-t border-white/15 flex items-center justify-between gap-2">
-          {/* 1-Tap WhatsApp Ping right from card */}
+        {/* Apple Health Metric Strip */}
+        <div className="grid grid-cols-3 gap-2 bg-[#F8F9FB] rounded-2xl p-3 border border-[#E5E5EA]/60">
+          <div className="flex flex-col items-center text-center">
+            <span className="text-[10.5px] font-semibold text-[#8E8E93] uppercase tracking-wider">
+              Full Strips
+            </span>
+            <span className="text-[18px] font-bold text-[#1C1C1E] tabular-nums tracking-tight mt-0.5">
+              {status.fullStripsRemaining}
+            </span>
+            <span className="text-[10.5px] text-[#8E8E93]">unopened</span>
+          </div>
+
+          <div className="flex flex-col items-center text-center border-x border-[#E5E5EA]">
+            <span className="text-[10.5px] font-semibold text-[#8E8E93] uppercase tracking-wider">
+              Active Strip
+            </span>
+            <span className="text-[18px] font-bold text-[#1C1C1E] tabular-nums tracking-tight mt-0.5">
+              {status.pillsOnActiveStrip}
+            </span>
+            <span className="text-[10.5px] text-[#8E8E93]">pills left</span>
+          </div>
+
+          <div className="flex flex-col items-center text-center">
+            <span className="text-[10.5px] font-semibold text-[#8E8E93] uppercase tracking-wider">
+              Safe Supply
+            </span>
+            <span className="text-[18px] font-bold text-[#1C1C1E] tabular-nums tracking-tight mt-0.5">
+              {status.safeDays}d
+            </span>
+            <span className="text-[10.5px] text-[#8E8E93]">remaining</span>
+          </div>
+        </div>
+
+        {/* Footer Toggle Bar */}
+        <div className="pt-2 border-t border-[#F2F2F7] flex items-center justify-between gap-2">
+          {/* 1-Tap WhatsApp Ping */}
           <button
             type="button"
             onClick={handleWhatsApp}
             className="
               inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full
-              bg-[#25D366]/90 hover:bg-[#25D366] text-white text-xs font-bold
-              backdrop-blur-sm shadow-sm active:scale-95 transition-all
+              bg-[#F0FDF4] hover:bg-[#DCFCE7] active:bg-[#BBF7D0]
+              border border-[#25D366]/30 text-[#128C7E] text-[12px] font-semibold
+              transition-colors
             "
           >
-            <MessageCircle className="w-3.5 h-3.5 fill-white/20" />
+            <MessageCircle className="w-3.5 h-3.5 stroke-[2.2]" />
             <span>Ping WhatsApp</span>
           </button>
 
-          {/* Tap hint */}
-          <div className="flex items-center gap-0.5 text-white/80 group-hover:text-white text-xs font-semibold transition-colors">
-            <span>Tap for Audit</span>
-            <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-          </div>
+          {/* Accordion Trigger with Down Arrow */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsExpanded(!isExpanded);
+            }}
+            className="
+              flex items-center gap-1.5 px-3 py-1.5 rounded-full
+              text-[#007AFF] hover:bg-[#F2F2F7] text-[13px] font-semibold
+              transition-colors
+            "
+          >
+            <span>{isExpanded ? 'Hide Actions' : 'Actions & Details'}</span>
+            <motion.div
+              animate={{ rotate: isExpanded ? 180 : 0 }}
+              transition={{ duration: 0.25, ease: 'easeInOut' }}
+              className="flex items-center"
+            >
+              <ChevronDown className="w-4 h-4 stroke-[2.5]" />
+            </motion.div>
+          </button>
         </div>
       </div>
+
+      {/* Accordion Expandable Details & Actions Area */}
+      <AnimatePresence initial={false}>
+        {isExpanded && (
+          <motion.div
+            key="accordion-content"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.28, ease: 'easeInOut' }}
+            className="overflow-hidden border-t border-[#E5E5EA] bg-[#F8F9FB]"
+          >
+            <div className="p-5 flex flex-col gap-4">
+              {/* Caregiver Actions Title */}
+              <div className="flex items-center justify-between">
+                <span className="text-[12px] font-bold text-[#6E6E73] uppercase tracking-wider">
+                  Caregiver Rapid Audit
+                </span>
+                <span className="text-[11.5px] text-[#8E8E93] flex items-center gap-1">
+                  <Calendar className="w-3.5 h-3.5" />
+                  Last: {medicine.stock?.lastAuditDate || 'Today'}
+                </span>
+              </div>
+
+              {/* 3 Inline Apple Action Items */}
+              <div className="grid grid-cols-3 gap-2">
+                {/* Action 1: Matches Expected */}
+                <motion.button
+                  type="button"
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => onAudit && onAudit(medicine, 'MATCHES_EXPECTED')}
+                  className="
+                    flex flex-col items-center justify-center gap-1.5
+                    p-3 rounded-2xl bg-white border border-[#E5E5EA]
+                    hover:border-[#34C759]/50 hover:bg-[#F0FDF4]
+                    active:bg-[#DCFCE7] shadow-sm transition-all text-center
+                  "
+                >
+                  <div className="w-9 h-9 rounded-full bg-[#EBF9EE] flex items-center justify-center text-[#15803D]">
+                    <CheckCircle2 className="w-5 h-5 stroke-[2]" />
+                  </div>
+                  <span className="text-[12.5px] font-bold text-[#1C1C1E] leading-tight">
+                    Matches Count
+                  </span>
+                  <span className="text-[10.5px] text-[#8E8E93] leading-tight">
+                    Stock on track
+                  </span>
+                </motion.button>
+
+                {/* Action 2: Discarded Early */}
+                <motion.button
+                  type="button"
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => onAudit && onAudit(medicine, 'STRIP_DISCARDED_EARLY')}
+                  className="
+                    flex flex-col items-center justify-center gap-1.5
+                    p-3 rounded-2xl bg-white border border-[#E5E5EA]
+                    hover:border-[#FF9F0A]/50 hover:bg-[#FFFBEB]
+                    active:bg-[#FEF3C7] shadow-sm transition-all text-center
+                  "
+                >
+                  <div className="w-9 h-9 rounded-full bg-[#FFF8EB] flex items-center justify-center text-[#B45309]">
+                    <AlertCircle className="w-5 h-5 stroke-[2]" />
+                  </div>
+                  <span className="text-[12.5px] font-bold text-[#1C1C1E] leading-tight">
+                    Discarded Early
+                  </span>
+                  <span className="text-[10.5px] text-[#8E8E93] leading-tight">
+                    Log {status.pillsOnActiveStrip} lost
+                  </span>
+                </motion.button>
+
+                {/* Action 3: Send Message */}
+                <motion.button
+                  type="button"
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleWhatsApp}
+                  className="
+                    flex flex-col items-center justify-center gap-1.5
+                    p-3 rounded-2xl bg-white border border-[#E5E5EA]
+                    hover:border-[#25D366]/50 hover:bg-[#F0FDF4]
+                    active:bg-[#DCFCE7] shadow-sm transition-all text-center
+                  "
+                >
+                  <div className="w-9 h-9 rounded-full bg-[#EBF9EE] flex items-center justify-center text-[#128C7E]">
+                    <MessageCircle className="w-5 h-5 stroke-[2]" />
+                  </div>
+                  <span className="text-[12.5px] font-bold text-[#1C1C1E] leading-tight">
+                    Send Message
+                  </span>
+                  <span className="text-[10.5px] text-[#8E8E93] leading-tight">
+                    WhatsApp Dad/Mom
+                  </span>
+                </motion.button>
+              </div>
+
+              {/* Extended Details Grid */}
+              <div className="p-3.5 rounded-2xl bg-white border border-[#E5E5EA] flex flex-col gap-2 text-xs">
+                <div className="flex items-center justify-between text-[#6E6E73]">
+                  <span>Total Available Pills:</span>
+                  <span className="font-bold text-[#1C1C1E]">{status.totalRawTablets} pills</span>
+                </div>
+                <div className="flex items-center justify-between text-[#6E6E73]">
+                  <span>Pack Size:</span>
+                  <span className="font-bold text-[#1C1C1E]">{medicine.stripConfig?.tabletsPerStrip || 10} tablets / strip</span>
+                </div>
+                <div className="flex items-center justify-between text-[#6E6E73]">
+                  <span>Abandonment Buffer:</span>
+                  <span className="font-bold text-[#1C1C1E]">Safety margin: 3 pills</span>
+                </div>
+              </div>
+
+              {/* Remove Medicine Option */}
+              <div className="flex items-center justify-between text-xs text-[#8E8E93] pt-1">
+                <span>Course: Ongoing</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (window.confirm(`Remove ${medicine.name} from tracked medicines?`)) {
+                      if (onDelete) onDelete(medicine.id);
+                    }
+                  }}
+                  className="text-[#FF3B30] hover:underline flex items-center gap-1 font-medium p-1"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Remove Medicine</span>
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

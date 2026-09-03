@@ -1,15 +1,14 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { GlassTopBar } from '../components/glass/GlassTopBar';
 import { GlassFAB } from '../components/glass/GlassFAB';
 import { MedicineCard } from '../components/content/MedicineCard';
-import { MedicineDetailDialog } from '../components/content/MedicineDetailDialog';
 import { evaluateMedicineStatus } from '../lib/depletion';
 import { PlusCircle, Heart } from 'lucide-react';
 
 /**
  * Home Screen — Dashboard for Dad
  * Auto-sorts medicines Red -> Amber -> Green so high-urgency items are at the top.
- * Tapping a card opens a modern, in-page dialog modal using spring animations.
+ * Cards feature an inline accordion: tapping expands actions directly in place.
  */
 export function Home({ 
   medicines = [], 
@@ -18,8 +17,6 @@ export function Home({
   onDelete,
   onOpenAddSheet 
 }) {
-  const [activeDialogMedId, setActiveDialogMedId] = useState(null);
-
   // Sort medicines strictly: Red (1) -> Amber (2) -> Green (3)
   const sortedMedicines = useMemo(() => {
     return [...medicines].sort((a, b) => {
@@ -28,11 +25,6 @@ export function Home({
       return statusA.priority - statusB.priority;
     });
   }, [medicines]);
-
-  // Find currently active medicine for dialog
-  const activeDialogMedicine = useMemo(() => {
-    return medicines.find(m => m.id === activeDialogMedId) || null;
-  }, [medicines, activeDialogMedId]);
 
   // Greeting based on time of day
   const greeting = useMemo(() => {
@@ -63,7 +55,7 @@ export function Home({
           </div>
         )}
 
-        {/* Modern Expandable Cards List */}
+        {/* Modern Inline Accordion Cards List */}
         {sortedMedicines.length > 0 ? (
           <div className="flex flex-col gap-4">
             {sortedMedicines.map((med) => (
@@ -71,7 +63,8 @@ export function Home({
                 key={med.id}
                 medicine={med}
                 settings={settings}
-                onSelect={(selected) => setActiveDialogMedId(selected.id)}
+                onAudit={onAudit}
+                onDelete={onDelete}
               />
             ))}
           </div>
@@ -98,16 +91,6 @@ export function Home({
 
       {/* Floating Glass FAB for instant addition */}
       <GlassFAB onClick={onOpenAddSheet} />
-
-      {/* Modern In-Page Dialog Modal (Same page, spring physics) */}
-      <MedicineDetailDialog
-        medicine={activeDialogMedicine}
-        isOpen={Boolean(activeDialogMedicine)}
-        onClose={() => setActiveDialogMedId(null)}
-        onAudit={onAudit}
-        onDelete={onDelete}
-        settings={settings}
-      />
     </div>
   );
 }
