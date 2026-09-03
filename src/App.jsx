@@ -44,15 +44,17 @@ export function App() {
     showToast('Medicine removed');
   };
 
-  const handleAudit = (med, outcome) => {
-    const { updatedMedicine, auditRecord } = reconcileAudit(med, outcome);
+  const handleAudit = (med, outcome, customData = null) => {
+    const { updatedMedicine, auditRecord } = reconcileAudit(med, outcome, customData);
     saveMedicine(updatedMedicine);
     addAuditLog(auditRecord);
     
     if (outcome === 'MATCHES_EXPECTED') {
       showToast('Count confirmed. All safe!');
+    } else if (outcome === 'COUNT_ADJUSTED') {
+      showToast('Strip counts updated & synced!');
     } else {
-      showToast('Logged: Strip discarded early. New strip opened.', 'warning');
+      showToast('Logged: Strip discarded early. Inventory updated.', 'warning');
     }
   };
 

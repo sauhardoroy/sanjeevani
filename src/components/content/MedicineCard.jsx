@@ -1,336 +1,648 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { 
-  Pill, 
-  MessageCircle, 
-  ChevronDown, 
-  AlertCircle, 
+import React, { useMemo, useState } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
+import {
+  AlertCircle,
+  CalendarDays,
+  Check,
   CheckCircle2,
+  ChevronDown,
+  Layers3,
+  MessageCircle,
+  Pill,
+  ShieldCheck,
   Trash2,
-  Calendar,
-  Layers,
-  Info
+  Edit3,
+  Plus,
+  Layers
 } from 'lucide-react';
+
 import { evaluateMedicineStatus } from '../../lib/depletion';
 import { getWhatsAppUrl } from '../../lib/whatsapp';
+import { RollingStepper } from './RollingStepper';
 
-/**
- * MedicineCard — Modern Minimalist Apple HIG Card with Inline Accordion
- * Displays all details and caregiver actions directly inside the card when expanded.
- * No modal dialog needed.
- */
-export function MedicineCard({ 
-  medicine, 
-  settings, 
-  onAudit, 
-  onDelete 
+// -----------------------------------------------------------------------------
+// Animation Transitions (Apple Spring Physics)
+// -----------------------------------------------------------------------------
+
+const SPRING = {
+  type: 'spring',
+  stiffness: 420,
+  damping: 32,
+  mass: 0.8,
+};
+
+const TOUCH_SPRING = {
+  type: 'spring',
+  stiffness: 460,
+  damping: 24,
+  mass: 0.6,
+};
+
+// -----------------------------------------------------------------------------
+// Status configuration (Apple Restrained Palette)
+// -----------------------------------------------------------------------------
+
+const STATUS_UI = {
+  SAFE: {
+    label: 'On Track',
+    dotColor: 'bg-[#34C759]',
+    icon: ShieldCheck,
+  },
+  LOW_STOCK: {
+    label: 'Running Low',
+    dotColor: 'bg-[#FF9F0A]',
+    icon: AlertCircle,
+  },
+  ABANDONMENT_RISK: {
+    label: 'Check Active Strip',
+    dotColor: 'bg-[#FF9F0A]',
+    icon: AlertCircle,
+  },
+  REFILL_NOW: {
+    label: 'Refill Needed',
+    dotColor: 'bg-[#FF3B30]',
+    icon: AlertCircle,
+  },
+};
+
+function formatCount(value) {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return '0';
+  }
+  if (Number.isInteger(value)) {
+    return String(value);
+  }
+  return value.toFixed(1);
+}
+
+// -----------------------------------------------------------------------------
+// Main Component (Apple Inset Grouped Mobile Architecture)
+// -----------------------------------------------------------------------------
+
+export function MedicineCard({
+  medicine,
+  settings,
+  onAudit,
+  onDelete,
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const status = evaluateMedicineStatus(medicine);
+  const [isAuditing, setIsAuditing] = useState(false);
+  const [isEditingCount, setIsEditingCount] = useState(false);
 
-  const statusThemes = {
-    green: {
-      dotColor: 'bg-[#34C759]',
-      badgeBg: 'bg-[#EBF9EE]',
-      badgeBorder: 'border-[#34C759]/25',
-      badgeText: 'text-[#15803D]',
-      label: 'Safe Supply'
-    },
-    amber: {
-      dotColor: 'bg-[#FF9F0A]',
-      badgeBg: 'bg-[#FFF8EB]',
-      badgeBorder: 'border-[#FF9F0A]/30',
-      badgeText: 'text-[#B45309]',
-      label: 'Drop-Zone'
-    },
-    red: {
-      dotColor: 'bg-[#FF3B30]',
-      badgeBg: 'bg-[#FEEFEF]',
-      badgeBorder: 'border-[#FF3B30]/30',
-      badgeText: 'text-[#B91C1C]',
-      label: 'Refill Now'
+  const status = useMemo(() => {
+    if (!medicine) return null;
+    return evaluateMedicineStatus(medicine);
+  }, [medicine]);
+
+  if (!medicine || !status) {
+    return null;
+  }
+
+  const statusConfig = STATUS_UI[status.type] || STATUS_UI.SAFE;
+
+  const tabletsPerStrip =
+    Number(medicine.stripConfig?.tabletsPerStrip) ||
+    Number(medicine.tabletsPerStrip) ||
+    10;
+
+  const abandonmentBuffer =
+    Number(medicine.stripConfig?.abandonmentBuffer) ||
+    Number(settings?.abandonmentBuffer) ||
+    3;
+
+  const pillsOnActiveStrip = Number(status.pillsOnActiveStrip) || 0;
+  const fullStripsRemaining = Number(status.fullStripsRemaining) || 0;
+  const openStrips = status.openStripsRemaining || [pillsOnActiveStrip];
+  const safeDays = Number(status.safeDays) || 0;
+  const abandonmentRisk = status.type === 'ABANDONMENT_RISK';
+  const critical = status.type === 'REFILL_NOW';
+  const hasMultipleOpen = openStrips.length > 1;
+
+  // Local state for Count Adjustment Mode
+  const [editOpenStrips, setEditOpenStrips] = useState([...openStrips]);
+  const [editFullStrips, setEditFullStrips] = useState(fullStripsRemaining);
+
+  const startEditing = (e) => {
+    if (e) e.stopPropagation();
+    setEditOpenStrips([...openStrips]);
+    setEditFullStrips(fullStripsRemaining);
+    setIsEditingCount(true);
+  };
+
+  const handleSetStripCount = (stripIdx, count) => {
+    setEditOpenStrips(prev => {
+      const next = [...prev];
+      next[stripIdx] = Math.max(0, Math.min(tabletsPerStrip, count));
+      return next;
+    });
+  };
+
+  const handleAddStrip = () => {
+    setEditOpenStrips(prev => [...prev, tabletsPerStrip]);
+  };
+
+  const handleRemoveStrip = (stripIdx) => {
+    if (editOpenStrips.length <= 1) return;
+    setEditOpenStrips(prev => prev.filter((_, idx) => idx !== stripIdx));
+  };
+
+  const handleSaveCountAdjusted = async () => {
+    if (!onAudit || isAuditing) return;
+    setIsAuditing(true);
+    try {
+      await onAudit(medicine, 'COUNT_ADJUSTED', {
+        openStrips: editOpenStrips,
+        fullStripsDelivered: editFullStrips,
+      });
+      setIsEditingCount(false);
+    } finally {
+      setIsAuditing(false);
     }
   };
 
-  const currentTheme = statusThemes[status.color] || statusThemes.green;
+  const handleAudit = async (outcome) => {
+    if (!onAudit || isAuditing) return;
+    setIsAuditing(true);
+    try {
+      await onAudit(medicine, outcome);
+    } finally {
+      setIsAuditing(false);
+    }
+  };
 
   const handleWhatsApp = (e) => {
     if (e) e.stopPropagation();
+    if (!medicine) return;
     const url = getWhatsAppUrl(medicine, status, settings);
-    window.open(url, '_blank');
+    if (url) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
   };
 
-  const scheduleSummary = Array.isArray(medicine.schedule?.timeOfDay)
-    ? medicine.schedule.timeOfDay.map(t => t.charAt(0) + t.slice(1).toLowerCase()).join(' & ')
-    : 'Daily';
-
   return (
-    <motion.div
+    <motion.article
       layout
-      transition={{ layout: { duration: 0.3, type: 'spring', bounce: 0.1 } }}
+      transition={SPRING}
       className="
-        w-full bg-white rounded-[24px]
-        border border-[#E5E5EA]
-        shadow-[0_2px_12px_rgba(0,0,0,0.04)]
-        overflow-hidden transition-all
+        overflow-hidden rounded-[26px]
+        border border-[#E5E5EA] bg-white
+        shadow-[0_4px_24px_rgba(0,0,0,0.04),0_1px_3px_rgba(0,0,0,0.02)]
+        transition-shadow
       "
     >
-      {/* Top Header Area (Clickable to toggle accordion) */}
-      <div 
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="p-5 pb-3.5 cursor-pointer flex flex-col gap-3.5"
-      >
-        {/* Row 1: Icon + Title & Status Badge */}
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-start gap-3 flex-1 min-w-0">
-            {/* Apple Squircle Icon Container */}
-            <div className="
-              w-11 h-11 rounded-2xl bg-[#F2F2F7]
-              flex items-center justify-center shrink-0 text-[#1C1C1E]
-            ">
-              <Pill className="w-5 h-5 stroke-[2]" />
+      {/* ------------------------------------------------------------------ */}
+      {/* Front Card Header (Name, Status Badge, Short Message) */}
+      {/* ------------------------------------------------------------------ */}
+
+      <div className="p-4 sm:p-5 flex flex-col gap-3">
+        {/* Top Row: Icon + Name + Status Pill */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#F2F2F7] text-[#1C1C1E] shadow-xs">
+              <Pill size={19} strokeWidth={2} />
             </div>
 
-            <div className="flex flex-col min-w-0">
-              <h3 className="text-[19px] font-bold tracking-tight text-[#1C1C1E] leading-snug truncate">
-                {medicine.name}
-              </h3>
-              <p className="text-[13px] font-medium text-[#8E8E93] truncate mt-0.5">
-                {medicine.purpose || 'Medication'} • {scheduleSummary}
-              </p>
-            </div>
+            <h3 className="truncate text-[17px] font-bold tracking-tight text-[#1C1C1E]">
+              {medicine.name}
+            </h3>
           </div>
 
-          {/* Restrained Apple Status Badge */}
-          <div className={`
-            shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full
-            border ${currentTheme.badgeBg} ${currentTheme.badgeBorder}
-          `}>
-            <span className={`w-2 h-2 rounded-full ${currentTheme.dotColor}`} />
-            <span className={`text-[12.5px] font-bold ${currentTheme.badgeText} leading-none`}>
-              {status.badgeText}
-            </span>
+          {/* Minimalist Apple Status Pill */}
+          <div className="flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 bg-[#F8F9FB] border border-[#E5E5EA] text-[#1C1C1E] text-xs font-semibold shadow-xs">
+            <span className={`w-2 h-2 rounded-full ${statusConfig.dotColor}`} />
+            <span>{statusConfig.label}</span>
           </div>
         </div>
 
-        {/* Warning Notice if in Drop Zone or Refill */}
-        {status.warningLine && (
-          <div className="
-            px-3.5 py-2.5 rounded-xl bg-[#FFF8EB] border border-[#FF9F0A]/25
-            text-[12.5px] text-[#92400E] font-medium leading-relaxed
-            flex items-center gap-2
-          ">
-            <AlertCircle className="w-4 h-4 text-[#D97706] shrink-0 stroke-[2]" />
-            <span className="truncate">{status.warningLine}</span>
+        {/* Short Message Banner */}
+        {status.warningLine ? (
+          <div className="rounded-xl bg-[#F8F9FB] border border-[#E5E5EA] px-3.5 py-2 text-[12px] text-[#1C1C1E] font-medium leading-snug flex items-center gap-2">
+            <AlertCircle size={15} className={`shrink-0 ${critical ? 'text-[#FF3B30]' : 'text-[#FF9F0A]'}`} />
+            <span>{status.warningLine}</span>
+          </div>
+        ) : (
+          <div className="rounded-xl bg-[#F8F9FB] border border-[#E5E5EA] px-3.5 py-2 text-[12px] text-[#1C1C1E] font-medium leading-snug flex items-center gap-2">
+            <Check size={15} className="shrink-0 text-[#34C759] stroke-[2.5]" />
+            <span>Safe supply on track: <strong>{safeDays} days</strong> remaining.</span>
           </div>
         )}
 
-        {/* Apple Health Metric Strip */}
-        <div className="grid grid-cols-3 gap-2 bg-[#F8F9FB] rounded-2xl p-3 border border-[#E5E5EA]/60">
-          <div className="flex flex-col items-center text-center">
-            <span className="text-[10.5px] font-semibold text-[#8E8E93] uppercase tracking-wider">
-              Full Strips
-            </span>
-            <span className="text-[18px] font-bold text-[#1C1C1E] tabular-nums tracking-tight mt-0.5">
-              {status.fullStripsRemaining}
-            </span>
-            <span className="text-[10.5px] text-[#8E8E93]">unopened</span>
-          </div>
-
-          <div className="flex flex-col items-center text-center border-x border-[#E5E5EA]">
-            <span className="text-[10.5px] font-semibold text-[#8E8E93] uppercase tracking-wider">
-              Active Strip
-            </span>
-            <span className="text-[18px] font-bold text-[#1C1C1E] tabular-nums tracking-tight mt-0.5">
-              {status.pillsOnActiveStrip}
-            </span>
-            <span className="text-[10.5px] text-[#8E8E93]">pills left</span>
-          </div>
-
-          <div className="flex flex-col items-center text-center">
-            <span className="text-[10.5px] font-semibold text-[#8E8E93] uppercase tracking-wider">
-              Safe Supply
-            </span>
-            <span className="text-[18px] font-bold text-[#1C1C1E] tabular-nums tracking-tight mt-0.5">
-              {status.safeDays}d
-            </span>
-            <span className="text-[10.5px] text-[#8E8E93]">remaining</span>
-          </div>
-        </div>
-
-        {/* Footer Toggle Bar */}
-        <div className="pt-2 border-t border-[#F2F2F7] flex items-center justify-between gap-2">
-          {/* 1-Tap WhatsApp Ping */}
-          <button
+        {/* Action Row: WhatsApp & Single Unified Expand Toggle */}
+        <div className="pt-1.5 border-t border-[#F2F2F7] flex items-center justify-between gap-2">
+          {/* WhatsApp Pill */}
+          <motion.button
+            whileTap={{ scale: 0.94, y: 1 }}
+            transition={TOUCH_SPRING}
             type="button"
             onClick={handleWhatsApp}
             className="
-              inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full
-              bg-[#F0FDF4] hover:bg-[#DCFCE7] active:bg-[#BBF7D0]
-              border border-[#25D366]/30 text-[#128C7E] text-[12px] font-semibold
-              transition-colors
+              inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full
+              border border-[#E5E5EA] bg-white hover:bg-[#F8F9FB]
+              text-[#1C1C1E] text-[12px] font-semibold transition-colors
+              shadow-xs active:shadow-none select-none
             "
           >
-            <MessageCircle className="w-3.5 h-3.5 stroke-[2.2]" />
-            <span>Ping WhatsApp</span>
-          </button>
+            <MessageCircle size={14} strokeWidth={2.2} />
+            <span>WhatsApp</span>
+          </motion.button>
 
-          {/* Accordion Trigger with Down Arrow */}
-          <button
+          {/* Unified Details & Actions Expand Toggle */}
+          <motion.button
+            whileTap={{ scale: 0.94, y: 1 }}
+            transition={TOUCH_SPRING}
             type="button"
-            onClick={(e) => {
-              e.stopPropagation();
+            onClick={() => {
               setIsExpanded(!isExpanded);
+              if (isExpanded) setIsEditingCount(false);
             }}
-            className="
-              flex items-center gap-1.5 px-3 py-1.5 rounded-full
-              text-[#007AFF] hover:bg-[#F2F2F7] text-[13px] font-semibold
-              transition-colors
-            "
+            className={`
+              flex items-center gap-1.5 px-4 py-2 rounded-full
+              border text-[12px] font-semibold transition-all select-none shadow-xs
+              ${isExpanded 
+                ? 'bg-[#1C1C1E] text-white border-[#1C1C1E]' 
+                : 'bg-white hover:bg-[#F8F9FB] text-[#1C1C1E] border-[#E5E5EA]'
+              }
+            `}
+            aria-expanded={isExpanded}
           >
-            <span>{isExpanded ? 'Hide Actions' : 'Actions & Details'}</span>
-            <motion.div
+            <span>{isExpanded ? 'Hide Details' : 'Details & Actions'}</span>
+            <motion.span
               animate={{ rotate: isExpanded ? 180 : 0 }}
-              transition={{ duration: 0.25, ease: 'easeInOut' }}
+              transition={SPRING}
               className="flex items-center"
             >
-              <ChevronDown className="w-4 h-4 stroke-[2.5]" />
-            </motion.div>
-          </button>
+              <ChevronDown size={14} strokeWidth={2.5} />
+            </motion.span>
+          </motion.button>
         </div>
       </div>
 
-      {/* Accordion Expandable Details & Actions Area */}
+      {/* ------------------------------------------------------------------ */}
+      {/* Clean, Visible Dropdown (Multi-Strip Visualization & Reconciliation) */}
+      {/* ------------------------------------------------------------------ */}
+
       <AnimatePresence initial={false}>
         {isExpanded && (
           <motion.div
-            key="accordion-content"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.28, ease: 'easeInOut' }}
+            key="details-dropdown"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={SPRING}
             className="overflow-hidden border-t border-[#E5E5EA] bg-[#F8F9FB]"
           >
-            <div className="p-5 flex flex-col gap-4">
-              {/* Caregiver Actions Title */}
-              <div className="flex items-center justify-between">
-                <span className="text-[12px] font-bold text-[#6E6E73] uppercase tracking-wider">
-                  Caregiver Rapid Audit
-                </span>
-                <span className="text-[11.5px] text-[#8E8E93] flex items-center gap-1">
-                  <Calendar className="w-3.5 h-3.5" />
-                  Last: {medicine.stock?.lastAuditDate || 'Today'}
-                </span>
-              </div>
-
-              {/* 3 Inline Apple Action Items */}
-              <div className="grid grid-cols-3 gap-2">
-                {/* Action 1: Matches Expected */}
-                <motion.button
-                  type="button"
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => onAudit && onAudit(medicine, 'MATCHES_EXPECTED')}
-                  className="
-                    flex flex-col items-center justify-center gap-1.5
-                    p-3 rounded-2xl bg-white border border-[#E5E5EA]
-                    hover:border-[#34C759]/50 hover:bg-[#F0FDF4]
-                    active:bg-[#DCFCE7] shadow-sm transition-all text-center
-                  "
-                >
-                  <div className="w-9 h-9 rounded-full bg-[#EBF9EE] flex items-center justify-center text-[#15803D]">
-                    <CheckCircle2 className="w-5 h-5 stroke-[2]" />
+            <div className="p-4 sm:p-5 flex flex-col gap-3">
+              
+              {/* 1. Apple Health 3-Column Metric Pod */}
+              <div className="rounded-2xl border border-[#E5E5EA] bg-white p-3.5 shadow-xs">
+                <div className="grid grid-cols-3 divide-x divide-[#E5E5EA] text-center">
+                  <div className="px-2">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-[#8E8E93] block">
+                      {hasMultipleOpen ? 'In Open Strips' : 'Active Strip'}
+                    </span>
+                    <span className="text-[19px] font-bold text-[#1C1C1E] tabular-nums leading-tight mt-0.5 block">
+                      {formatCount(pillsOnActiveStrip)}
+                      <span className="text-[11px] font-normal text-[#8E8E93] ml-1">
+                        {hasMultipleOpen ? `pills (${openStrips.length} strips)` : 'pills left'}
+                      </span>
+                    </span>
                   </div>
-                  <span className="text-[12.5px] font-bold text-[#1C1C1E] leading-tight">
-                    Matches Count
-                  </span>
-                  <span className="text-[10.5px] text-[#8E8E93] leading-tight">
-                    Stock on track
-                  </span>
-                </motion.button>
 
-                {/* Action 2: Discarded Early */}
-                <motion.button
-                  type="button"
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => onAudit && onAudit(medicine, 'STRIP_DISCARDED_EARLY')}
-                  className="
-                    flex flex-col items-center justify-center gap-1.5
-                    p-3 rounded-2xl bg-white border border-[#E5E5EA]
-                    hover:border-[#FF9F0A]/50 hover:bg-[#FFFBEB]
-                    active:bg-[#FEF3C7] shadow-sm transition-all text-center
-                  "
-                >
-                  <div className="w-9 h-9 rounded-full bg-[#FFF8EB] flex items-center justify-center text-[#B45309]">
-                    <AlertCircle className="w-5 h-5 stroke-[2]" />
+                  <div className="px-2">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-[#8E8E93] block">
+                      Unopened
+                    </span>
+                    <span className="text-[19px] font-bold text-[#1C1C1E] tabular-nums leading-tight mt-0.5 block">
+                      {fullStripsRemaining}
+                      <span className="text-[11px] font-normal text-[#8E8E93] ml-1">strips</span>
+                    </span>
                   </div>
-                  <span className="text-[12.5px] font-bold text-[#1C1C1E] leading-tight">
-                    Discarded Early
-                  </span>
-                  <span className="text-[10.5px] text-[#8E8E93] leading-tight">
-                    Log {status.pillsOnActiveStrip} lost
-                  </span>
-                </motion.button>
 
-                {/* Action 3: Send Message */}
-                <motion.button
-                  type="button"
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleWhatsApp}
-                  className="
-                    flex flex-col items-center justify-center gap-1.5
-                    p-3 rounded-2xl bg-white border border-[#E5E5EA]
-                    hover:border-[#25D366]/50 hover:bg-[#F0FDF4]
-                    active:bg-[#DCFCE7] shadow-sm transition-all text-center
-                  "
-                >
-                  <div className="w-9 h-9 rounded-full bg-[#EBF9EE] flex items-center justify-center text-[#128C7E]">
-                    <MessageCircle className="w-5 h-5 stroke-[2]" />
+                  <div className="px-2">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-[#8E8E93] block">
+                      Safe Supply
+                    </span>
+                    <span className="text-[19px] font-bold text-[#1C1C1E] tabular-nums leading-tight mt-0.5 block">
+                      {safeDays}
+                      <span className="text-[11px] font-normal text-[#8E8E93] ml-1">days</span>
+                    </span>
                   </div>
-                  <span className="text-[12.5px] font-bold text-[#1C1C1E] leading-tight">
-                    Send Message
-                  </span>
-                  <span className="text-[10.5px] text-[#8E8E93] leading-tight">
-                    WhatsApp Dad/Mom
-                  </span>
-                </motion.button>
+                </div>
+
+                {/* Multi-Strip Visualizer: Renders each open strip and its tactile dots */}
+                <div className="mt-3.5 pt-3 border-t border-[#F2F2F7] flex flex-col gap-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-[#8E8E93] uppercase tracking-wider">
+                      {hasMultipleOpen ? 'Partially Used Strips' : 'Blister Strip'}
+                    </span>
+                    <span className="text-[11px] text-[#8E8E93]">
+                      {tabletsPerStrip} tabs/pack
+                    </span>
+                  </div>
+
+                  {openStrips.map((stripPills, sIdx) => {
+                    const isDropZone = stripPills <= abandonmentBuffer && stripPills > 0;
+                    return (
+                      <div
+                        key={sIdx}
+                        className="p-2.5 rounded-xl bg-[#F8F9FB] border border-[#E5E5EA] flex items-center justify-between gap-2 flex-wrap"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="text-[12px] font-bold text-[#1C1C1E]">
+                            {hasMultipleOpen ? `Strip #${sIdx + 1}` : 'Current Strip'}
+                          </span>
+                          <span className="text-[11.5px] text-[#8E8E93]">
+                            {stripPills} left
+                          </span>
+                          {isDropZone && (
+                            <span className="text-[10px] font-bold text-[#B45309] bg-[#FFF8EB] border border-[#FF9F0A]/40 px-1.5 py-0.5 rounded-full">
+                              Drop Zone
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Physical Blister Dots for this Strip */}
+                        <div className="flex items-center gap-1.5">
+                          {Array.from({ length: tabletsPerStrip }).map((_, pIdx) => {
+                            const filled = pIdx < stripPills;
+                            const inBuffer = pIdx < abandonmentBuffer;
+                            return (
+                              <motion.div
+                                key={pIdx}
+                                whileTap={{ scale: 0.8 }}
+                                transition={TOUCH_SPRING}
+                                className={`
+                                  h-5 w-5 rounded-full flex items-center justify-center select-none
+                                  ${filled
+                                    ? inBuffer && isDropZone
+                                      ? 'border border-[#FF9F0A] bg-[#FFF8EB]'
+                                      : 'border border-[#D1D1D6] bg-white shadow-xs'
+                                    : 'border border-dashed border-[#D1D1D6] bg-transparent'
+                                  }
+                                `}
+                              >
+                                {filled && (
+                                  <div
+                                    className={`h-2 w-2 rounded-full ${
+                                      inBuffer && isDropZone ? 'bg-[#FF9F0A]' : 'bg-[#1C1C1E]'
+                                    }`}
+                                  />
+                                )}
+                              </motion.div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
-              {/* Extended Details Grid */}
-              <div className="p-3.5 rounded-2xl bg-white border border-[#E5E5EA] flex flex-col gap-2 text-xs">
-                <div className="flex items-center justify-between text-[#6E6E73]">
-                  <span>Total Available Pills:</span>
-                  <span className="font-bold text-[#1C1C1E]">{status.totalRawTablets} pills</span>
-                </div>
-                <div className="flex items-center justify-between text-[#6E6E73]">
-                  <span>Pack Size:</span>
-                  <span className="font-bold text-[#1C1C1E]">{medicine.stripConfig?.tabletsPerStrip || 10} tablets / strip</span>
-                </div>
-                <div className="flex items-center justify-between text-[#6E6E73]">
-                  <span>Abandonment Buffer:</span>
-                  <span className="font-bold text-[#1C1C1E]">Safety margin: 3 pills</span>
-                </div>
+              {/* 2. Interactive Match & Reconcile Mode (When Count is Mismatching) */}
+              <AnimatePresence initial={false}>
+                {isEditingCount ? (
+                  <motion.div
+                    key="count-editor"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={SPRING}
+                    className="rounded-2xl bg-white border border-[#E5E5EA] p-3.5 flex flex-col gap-3 shadow-xs"
+                  >
+                    <div className="flex items-center justify-between border-b border-[#F2F2F7] pb-2">
+                      <div>
+                        <h4 className="text-[13px] font-bold text-[#1C1C1E]">
+                          Match Physical Count
+                        </h4>
+                        <p className="text-[11.5px] text-[#8E8E93]">
+                          Tap pill dots to set exact pills on each strip:
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingCount(false)}
+                        className="text-xs font-semibold text-[#8E8E93] hover:text-[#1C1C1E]"
+                      >
+                        Close
+                      </button>
+                    </div>
+
+                    {/* Interactive Editor for each open strip */}
+                    <div className="flex flex-col gap-2.5">
+                      {editOpenStrips.map((stripPills, sIdx) => (
+                        <div
+                          key={sIdx}
+                          className="p-3 bg-[#F8F9FB] rounded-xl border border-[#E5E5EA] flex flex-col gap-2"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-[12px] font-bold text-[#1C1C1E]">
+                              Strip #{sIdx + 1}
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[13px] font-bold text-[#1C1C1E] tabular-nums">
+                                {stripPills} / {tabletsPerStrip} pills
+                              </span>
+                              {editOpenStrips.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveStrip(sIdx)}
+                                  className="text-[#FF3B30] hover:text-red-700 p-0.5"
+                                  title="Remove this strip"
+                                >
+                                  <Trash2 size={13} />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Direct Tactile Blister Dots Selector */}
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            {Array.from({ length: tabletsPerStrip }).map((_, pIdx) => {
+                              const filled = pIdx < stripPills;
+                              return (
+                                <motion.button
+                                  key={pIdx}
+                                  type="button"
+                                  whileTap={{ scale: 0.8 }}
+                                  onClick={() =>
+                                    handleSetStripCount(
+                                      sIdx,
+                                      filled && pIdx === stripPills - 1 ? pIdx : pIdx + 1
+                                    )
+                                  }
+                                  className={`h-6 w-6 rounded-full flex items-center justify-center transition-all ${
+                                    filled
+                                      ? 'bg-[#1C1C1E] text-white shadow-xs'
+                                      : 'border border-dashed border-[#D1D1D6] bg-white hover:bg-slate-100'
+                                  }`}
+                                  aria-label={`Set strip ${sIdx + 1} to ${pIdx + 1} pills`}
+                                >
+                                  {filled && <div className="h-2 w-2 rounded-full bg-white" />}
+                                </motion.button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Found Another Open Strip Button */}
+                    <motion.button
+                      whileTap={{ scale: 0.96 }}
+                      type="button"
+                      onClick={handleAddStrip}
+                      className="
+                        flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl
+                        border border-dashed border-[#007AFF]/40 bg-[#007AFF]/5 text-[#007AFF]
+                        text-[12px] font-bold hover:bg-[#007AFF]/10 transition-colors
+                      "
+                    >
+                      <Plus size={14} />
+                      <span>Found Another Open Strip</span>
+                    </motion.button>
+
+                    {/* Unopened Full Strips Stepper */}
+                    <div className="p-3 bg-[#F8F9FB] rounded-xl border border-[#E5E5EA] flex items-center justify-between gap-3">
+                      <div>
+                        <span className="text-[12px] font-bold text-[#1C1C1E] block">
+                          Unopened Full Strips
+                        </span>
+                        <span className="text-[11px] text-[#8E8E93]">
+                          Full strips in medicine box
+                        </span>
+                      </div>
+                      <RollingStepper
+                        value={editFullStrips}
+                        onChange={setEditFullStrips}
+                        min={0}
+                        max={30}
+                        unit="strips"
+                      />
+                    </div>
+
+                    {/* Save & Reconcile Buttons */}
+                    <div className="flex items-center justify-end gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingCount(false)}
+                        className="px-4 py-2 rounded-full text-xs font-semibold text-[#8E8E93] hover:bg-[#F2F2F7]"
+                      >
+                        Cancel
+                      </button>
+                      <motion.button
+                        whileTap={{ scale: 0.95 }}
+                        type="button"
+                        onClick={handleSaveCountAdjusted}
+                        className="px-5 py-2 rounded-full bg-[#1C1C1E] text-white text-xs font-bold shadow-xs active:scale-95"
+                      >
+                        Save & Match Count
+                      </motion.button>
+                    </div>
+                  </motion.div>
+                ) : (
+                  /* 3. Normal Caregiver Quick Action Buttons */
+                  <div className="grid grid-cols-3 gap-2">
+                    {/* Count Matches */}
+                    <motion.button
+                      whileTap={{ scale: 0.95, y: 1 }}
+                      transition={TOUCH_SPRING}
+                      type="button"
+                      onClick={() => handleAudit('MATCHES_EXPECTED')}
+                      disabled={isAuditing}
+                      className="
+                        min-h-[44px] px-2 py-2 rounded-xl
+                        border border-[#E5E5EA] bg-white hover:bg-[#F2F2F7] active:bg-[#E5E5EA]
+                        text-[#1C1C1E] text-[12px] font-semibold
+                        flex flex-col items-center justify-center gap-1 shadow-xs transition-colors
+                      "
+                    >
+                      <CheckCircle2 size={16} className="text-[#34C759] shrink-0 stroke-[2]" />
+                      <span>Count Matches</span>
+                    </motion.button>
+
+                    {/* Adjust / Match Strips (Fix Mismatch) */}
+                    <motion.button
+                      whileTap={{ scale: 0.95, y: 1 }}
+                      transition={TOUCH_SPRING}
+                      type="button"
+                      onClick={startEditing}
+                      disabled={isAuditing}
+                      className="
+                        min-h-[44px] px-2 py-2 rounded-xl
+                        border border-[#E5E5EA] bg-white hover:bg-[#F2F2F7] active:bg-[#E5E5EA]
+                        text-[#1C1C1E] text-[12px] font-semibold
+                        flex flex-col items-center justify-center gap-1 shadow-xs transition-colors
+                      "
+                    >
+                      <Edit3 size={16} className="text-[#007AFF] shrink-0 stroke-[2]" />
+                      <span>Match Count</span>
+                    </motion.button>
+
+                    {/* Discarded Early */}
+                    <motion.button
+                      whileTap={{ scale: 0.95, y: 1 }}
+                      transition={TOUCH_SPRING}
+                      type="button"
+                      onClick={() => handleAudit('STRIP_DISCARDED_EARLY')}
+                      disabled={isAuditing}
+                      className="
+                        min-h-[44px] px-2 py-2 rounded-xl
+                        border border-[#E5E5EA] bg-white hover:bg-[#F2F2F7] active:bg-[#E5E5EA]
+                        text-[#1C1C1E] text-[12px] font-semibold
+                        flex flex-col items-center justify-center gap-1 shadow-xs transition-colors
+                      "
+                    >
+                      <AlertCircle size={16} className="text-[#FF9F0A] shrink-0 stroke-[2]" />
+                      <span>Discarded Early</span>
+                    </motion.button>
+                  </div>
+                )}
+              </AnimatePresence>
+
+              {/* Audit Progress Feedback */}
+              <AnimatePresence>
+                {isAuditing && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    className="flex items-center justify-center gap-2 py-1 text-xs text-[#8E8E93]"
+                  >
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
+                      className="h-3.5 w-3.5 rounded-full border-2 border-[#E5E5EA] border-t-[#1C1C1E]"
+                    />
+                    <span>Updating inventory…</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* 4. Subtle Footer Metadata & Remove */}
+              <div className="pt-1 flex items-center justify-between text-[11px] text-[#8E8E93]">
+                <span>Abandonment margin: {abandonmentBuffer} pills</span>
+                {onDelete && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (window.confirm(`Remove ${medicine.name} from tracked medicines?`)) {
+                        onDelete(medicine.id);
+                      }
+                    }}
+                    className="text-[#FF3B30] hover:underline font-medium flex items-center gap-1"
+                  >
+                    <Trash2 size={12} />
+                    <span>Remove</span>
+                  </button>
+                )}
               </div>
 
-              {/* Remove Medicine Option */}
-              <div className="flex items-center justify-between text-xs text-[#8E8E93] pt-1">
-                <span>Course: Ongoing</span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (window.confirm(`Remove ${medicine.name} from tracked medicines?`)) {
-                      if (onDelete) onDelete(medicine.id);
-                    }
-                  }}
-                  className="text-[#FF3B30] hover:underline flex items-center gap-1 font-medium p-1"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span>Remove Medicine</span>
-                </button>
-              </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </motion.article>
   );
 }
+
+export default MedicineCard;

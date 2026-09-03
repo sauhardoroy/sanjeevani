@@ -3,27 +3,48 @@ import { GlassTopBar } from '../components/glass/GlassTopBar';
 import { GlassFAB } from '../components/glass/GlassFAB';
 import { MedicineCard } from '../components/content/MedicineCard';
 import { evaluateMedicineStatus } from '../lib/depletion';
-import { PlusCircle, Heart } from 'lucide-react';
+import { PlusCircle, Heart, Check, ShieldCheck, AlertCircle, AlertTriangle } from 'lucide-react';
 
 /**
  * Home Screen — Dashboard for Dad
- * Auto-sorts medicines Red -> Amber -> Green so high-urgency items are at the top.
- * Cards feature an inline accordion: tapping expands actions directly in place.
+ * Organizes medicines into 3 clear, separate Apple-style sections:
+ * 1. Critical (Refill needed immediately)
+ * 2. Attention Required (Active strip drop zone or low stock)
+ * 3. All Good (Safe & normal supply)
  */
 export function Home({ 
   medicines = [], 
   settings, 
-  onAudit,
-  onDelete,
+  onAudit, 
+  onDelete, 
   onOpenAddSheet 
 }) {
-  // Sort medicines strictly: Red (1) -> Amber (2) -> Green (3)
-  const sortedMedicines = useMemo(() => {
-    return [...medicines].sort((a, b) => {
-      const statusA = evaluateMedicineStatus(a);
-      const statusB = evaluateMedicineStatus(b);
-      return statusA.priority - statusB.priority;
+  // Categorize medicines into the 3 distinct sections
+  const { criticalMeds, attentionMeds, allGoodMeds } = useMemo(() => {
+    const critical = [];
+    const attention = [];
+    const allGood = [];
+
+    medicines.forEach((med) => {
+      const status = evaluateMedicineStatus(med);
+      if (status.type === 'REFILL_NOW' || status.priority === 1) {
+        critical.push(med);
+      } else if (
+        status.type === 'ABANDONMENT_RISK' || 
+        status.type === 'LOW_STOCK' || 
+        status.priority === 2
+      ) {
+        attention.push(med);
+      } else {
+        allGood.push(med);
+      }
     });
+
+    return {
+      criticalMeds: critical,
+      attentionMeds: attention,
+      allGoodMeds: allGood,
+    };
   }, [medicines]);
 
   // Greeting based on time of day
@@ -46,29 +67,130 @@ export function Home({
         subtitle={subtitle}
       />
 
-      <main className="p-4 max-w-lg mx-auto w-full flex flex-col gap-4">
-        {/* Quick Safety Summary Caption */}
-        {medicines.length > 0 && (
-          <div className="px-1 flex items-center justify-between text-[13px] font-bold text-[#6E6E73] tracking-wide">
-            <span>TRACKED MEDICINES</span>
-            <span className="text-[11.5px] font-semibold text-[#8E8E93]">Urgent on top</span>
-          </div>
-        )}
+      <main className="p-4 max-w-lg mx-auto w-full flex flex-col gap-6">
+        {medicines.length > 0 ? (
+          <>
+            {/* ------------------------------------------------------------ */}
+            {/* Section 1: Critical (Red) */}
+            {/* ------------------------------------------------------------ */}
+            <section className="flex flex-col gap-3">
+              <div className="flex items-center justify-between px-1">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#FF3B30] shadow-xs" />
+                  <h2 className="text-[13px] font-bold uppercase tracking-wider text-[#1C1C1E]">
+                    Critical Refill
+                  </h2>
+                </div>
+                <span className={`text-[11.5px] font-bold px-2.5 py-0.5 rounded-full ${
+                  criticalMeds.length > 0 
+                    ? 'bg-[#FF3B30]/10 text-[#FF3B30]' 
+                    : 'bg-[#E5E5EA]/70 text-[#8E8E93]'
+                }`}>
+                  {criticalMeds.length}
+                </span>
+              </div>
 
-        {/* Modern Inline Accordion Cards List */}
-        {sortedMedicines.length > 0 ? (
-          <div className="flex flex-col gap-4">
-            {sortedMedicines.map((med) => (
-              <MedicineCard
-                key={med.id}
-                medicine={med}
-                settings={settings}
-                onAudit={onAudit}
-                onDelete={onDelete}
-              />
-            ))}
-          </div>
+              {criticalMeds.length > 0 ? (
+                <div className="flex flex-col gap-3">
+                  {criticalMeds.map((med) => (
+                    <MedicineCard
+                      key={med.id}
+                      medicine={med}
+                      settings={settings}
+                      onAudit={onAudit}
+                      onDelete={onDelete}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="py-3 px-4 rounded-2xl bg-white/70 border border-[#E5E5EA] text-[12.5px] font-medium text-[#8E8E93] flex items-center justify-center gap-2 shadow-xs">
+                  <Check size={14} className="text-[#34C759] stroke-[2.5]" />
+                  <span>No critical refills needed</span>
+                </div>
+              )}
+            </section>
+
+            {/* ------------------------------------------------------------ */}
+            {/* Section 2: Attention Required (Amber) */}
+            {/* ------------------------------------------------------------ */}
+            <section className="flex flex-col gap-3">
+              <div className="flex items-center justify-between px-1">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#FF9F0A] shadow-xs" />
+                  <h2 className="text-[13px] font-bold uppercase tracking-wider text-[#1C1C1E]">
+                    Attention Required
+                  </h2>
+                </div>
+                <span className={`text-[11.5px] font-bold px-2.5 py-0.5 rounded-full ${
+                  attentionMeds.length > 0 
+                    ? 'bg-[#FF9F0A]/12 text-[#D97706]' 
+                    : 'bg-[#E5E5EA]/70 text-[#8E8E93]'
+                }`}>
+                  {attentionMeds.length}
+                </span>
+              </div>
+
+              {attentionMeds.length > 0 ? (
+                <div className="flex flex-col gap-3">
+                  {attentionMeds.map((med) => (
+                    <MedicineCard
+                      key={med.id}
+                      medicine={med}
+                      settings={settings}
+                      onAudit={onAudit}
+                      onDelete={onDelete}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="py-3 px-4 rounded-2xl bg-white/70 border border-[#E5E5EA] text-[12.5px] font-medium text-[#8E8E93] flex items-center justify-center gap-2 shadow-xs">
+                  <Check size={14} className="text-[#34C759] stroke-[2.5]" />
+                  <span>No strips in early discard risk</span>
+                </div>
+              )}
+            </section>
+
+            {/* ------------------------------------------------------------ */}
+            {/* Section 3: All Good (Green) */}
+            {/* ------------------------------------------------------------ */}
+            <section className="flex flex-col gap-3">
+              <div className="flex items-center justify-between px-1">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#34C759] shadow-xs" />
+                  <h2 className="text-[13px] font-bold uppercase tracking-wider text-[#1C1C1E]">
+                    All Good
+                  </h2>
+                </div>
+                <span className={`text-[11.5px] font-bold px-2.5 py-0.5 rounded-full ${
+                  allGoodMeds.length > 0 
+                    ? 'bg-[#34C759]/12 text-[#2E7D32]' 
+                    : 'bg-[#E5E5EA]/70 text-[#8E8E93]'
+                }`}>
+                  {allGoodMeds.length}
+                </span>
+              </div>
+
+              {allGoodMeds.length > 0 ? (
+                <div className="flex flex-col gap-3">
+                  {allGoodMeds.map((med) => (
+                    <MedicineCard
+                      key={med.id}
+                      medicine={med}
+                      settings={settings}
+                      onAudit={onAudit}
+                      onDelete={onDelete}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="py-3 px-4 rounded-2xl bg-white/70 border border-[#E5E5EA] text-[12.5px] font-medium text-[#8E8E93] flex items-center justify-center gap-2 shadow-xs">
+                  <span>No medicines currently in safe supply</span>
+                </div>
+              )}
+            </section>
+          </>
         ) : (
+          /* Empty State */
           <div className="mt-12 flex flex-col items-center text-center p-8 bg-white rounded-3xl border border-[#E5E5EA] shadow-apple-card">
             <div className="w-16 h-16 rounded-full bg-[#007AFF]/10 flex items-center justify-center text-[#007AFF] mb-4">
               <PlusCircle className="w-8 h-8" />
@@ -94,3 +216,5 @@ export function Home({
     </div>
   );
 }
+
+export default Home;

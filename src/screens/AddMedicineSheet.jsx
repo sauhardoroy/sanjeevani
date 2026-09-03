@@ -1,39 +1,76 @@
 import React, { useState } from 'react';
-import { GlassSheet } from '../components/glass/GlassSheet';
-import { StepperInput } from '../components/content/StepperInput';
-import { ChipSelect } from '../components/content/ChipSelect';
-import { PrimaryButton } from '../components/content/Buttons';
+import { motion, AnimatePresence } from 'motion/react';
+import { 
+  X, 
+  Pill, 
+  Sunrise, 
+  Sun, 
+  Moon, 
+  Clock, 
+  Layers, 
+  Check, 
+  Sparkles,
+  Info
+} from 'lucide-react';
+import { RollingStepper } from '../components/content/RollingStepper';
+
+const SPRING_CONFIG = {
+  type: 'spring',
+  stiffness: 420,
+  damping: 32,
+  mass: 0.8,
+};
+
+const TAB_SPRING = {
+  type: 'spring',
+  bounce: 0.15,
+  duration: 0.45,
+};
 
 /**
- * AddMedicineSheet — Guided setup taking under 30 seconds
- * Uses steppers and chips to eliminate typing friction.
+ * AddMedicineSheet — Completely Revamped Apple HIG Modal Dialog
+ * Features 3D rolling steppers, Apple toggle switches, sliding segmented pill tabs,
+ * and concentric rounded geometry.
  */
 export function AddMedicineSheet({ isOpen, onClose, onSave }) {
   const [name, setName] = useState('');
   const [purpose, setPurpose] = useState('');
-  const [timeOfDay, setTimeOfDay] = useState(['MORNING']);
-  const [stripSize, setStripSize] = useState('10');
-  const [customStripSize, setCustomStripSize] = useState(10);
+
+  // Daily Schedule Slots (Apple Toggle Switches)
+  const [slots, setSlots] = useState({
+    MORNING: { enabled: true, label: 'Morning', icon: Sunrise, time: '8:00 AM' },
+    AFTERNOON: { enabled: false, label: 'Afternoon', icon: Sun, time: '1:00 PM' },
+    NIGHT: { enabled: true, label: 'Night', icon: Moon, time: '8:00 PM' },
+  });
+
+  // Food Relation (Segmented Sliding Tab)
+  const [foodRelation, setFoodRelation] = useState('AFTER_MEAL');
+  const foodOptions = [
+    { id: 'AFTER_MEAL', label: 'After meal' },
+    { id: 'BEFORE_MEAL', label: 'Before meal' },
+    { id: 'WITH_FOOD', label: 'With food' },
+  ];
+
+  // Pack Size (Segmented Sliding Tab + Custom)
+  const [packSizeOption, setPackSizeOption] = useState('10');
+  const [customPackSize, setCustomPackSize] = useState(10);
+  const packSizeOptions = ['10', '14', '15', 'CUSTOM'];
+
+  // Starting Inventory (Rolling 3D Steppers)
   const [fullStrips, setFullStrips] = useState(2);
   const [activePills, setActivePills] = useState(10);
 
-  const timeOptions = [
-    { value: 'MORNING', label: 'Morning', icon: '🌅' },
-    { value: 'AFTERNOON', label: 'Afternoon', icon: '☀️' },
-    { value: 'NIGHT', label: 'Night', icon: '🌙' },
-  ];
+  const toggleSlot = (key) => {
+    setSlots(prev => ({
+      ...prev,
+      [key]: { ...prev[key], enabled: !prev[key].enabled }
+    }));
+  };
 
-  const stripSizeOptions = [
-    { value: '10', label: '10 pills' },
-    { value: '14', label: '14 pills' },
-    { value: '15', label: '15 pills' },
-    { value: 'OTHER', label: 'Other' },
-  ];
-
-  const handleStripSizeChange = (val) => {
-    setStripSize(val);
-    if (val !== 'OTHER') {
-      const num = parseInt(val, 10);
+  const handlePackSizeChange = (opt) => {
+    setPackSizeOption(opt);
+    if (opt !== 'CUSTOM') {
+      const num = parseInt(opt, 10);
       setActivePills(num);
     }
   };
@@ -42,9 +79,13 @@ export function AddMedicineSheet({ isOpen, onClose, onSave }) {
     e.preventDefault();
     if (!name.trim()) return;
 
-    const tabletsPerStrip = stripSize === 'OTHER' 
-      ? Number(customStripSize) || 10 
-      : parseInt(stripSize, 10);
+    // Build active timeOfDay array
+    const activeTimes = Object.keys(slots).filter(k => slots[k].enabled);
+    const timeOfDay = activeTimes.length > 0 ? activeTimes : ['MORNING'];
+
+    const tabletsPerStrip = packSizeOption === 'CUSTOM'
+      ? Number(customPackSize) || 10
+      : parseInt(packSizeOption, 10);
 
     const newMed = {
       id: 'med-' + Date.now(),
@@ -53,135 +94,358 @@ export function AddMedicineSheet({ isOpen, onClose, onSave }) {
       schedule: {
         timeOfDay,
         pillsPerDose: 1.0,
-        foodRelation: 'AFTER_MEAL'
+        foodRelation
       },
       stripConfig: {
         tabletsPerStrip,
         abandonmentBuffer: 3
       },
       stock: {
-        fullStripsDelivered: fullStrips,
-        currentStripPillsLeft: Math.min(activePills, tabletsPerStrip),
+        fullStripsDelivered: Number(fullStrips) || 0,
+        currentStripPillsLeft: Math.min(Number(activePills) || 0, tabletsPerStrip),
         lastAuditDate: new Date().toISOString().split('T')[0]
       }
     };
 
     onSave(newMed);
-    // Reset form
+
+    // Reset Form
     setName('');
     setPurpose('');
-    setTimeOfDay(['MORNING']);
-    setStripSize('10');
+    setSlots({
+      MORNING: { enabled: true, label: 'Morning', icon: Sunrise, time: '8:00 AM' },
+      AFTERNOON: { enabled: false, label: 'Afternoon', icon: Sun, time: '1:00 PM' },
+      NIGHT: { enabled: true, label: 'Night', icon: Moon, time: '8:00 PM' },
+    });
+    setFoodRelation('AFTER_MEAL');
+    setPackSizeOption('10');
     setFullStrips(2);
     setActivePills(10);
     onClose();
   };
 
   return (
-    <GlassSheet isOpen={isOpen} onClose={onClose} title="Add a Medicine">
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        {/* Medicine Name */}
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="med-name" className="text-[15px] font-semibold text-[#1C1C1E]">
-            Medicine name *
-          </label>
-          <input
-            id="med-name"
-            type="text"
-            required
-            autoFocus
-            placeholder="e.g. Metformin 500mg"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+    <AnimatePresence mode="wait">
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto font-sans">
+          {/* Subtle Dimming Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.35, ease: 'easeOut' }}
+            onClick={onClose}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+          />
+
+          {/* Modal Container */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.94, y: 16 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.94, y: 16 }}
+            transition={SPRING_CONFIG}
+            style={{ borderRadius: 32 }}
             className="
-              min-h-[48px] px-4 py-3
-              rounded-[14px] bg-white border border-[#E5E5EA]
-              text-[17px] text-[#1C1C1E] placeholder:text-[#8E8E93]
-              focus:outline-none focus:border-[#007AFF] focus:ring-2 focus:ring-[#007AFF]/20
-              shadow-sm
+              relative w-full max-w-lg bg-white overflow-hidden
+              border border-[#E5E5EA] shadow-2xl z-10 flex flex-col my-auto max-h-[92vh]
             "
-          />
+          >
+            {/* Header */}
+            <div className="p-6 pb-4 border-b border-[#F2F2F7] flex items-start justify-between gap-4">
+              <div className="flex items-start gap-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-[#F2F2F7] flex items-center justify-center shrink-0 text-[#1C1C1E]">
+                  <Pill className="w-6 h-6 stroke-[2]" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold tracking-tight text-[#1C1C1E]">
+                    Add Medicine
+                  </h2>
+                  <p className="text-[13px] text-[#8E8E93] mt-0.5 leading-snug">
+                    Track blister strips and refill safety for Mom & Dad.
+                  </p>
+                </div>
+              </div>
+
+              {/* Minimalist Close Button */}
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Close dialog"
+                className="
+                  flex h-8 w-8 items-center justify-center shrink-0
+                  bg-[#F2F2F7] hover:bg-[#E5E5EA] active:scale-90
+                  rounded-full text-[#6E6E73] hover:text-[#1C1C1E]
+                  transition-all
+                "
+              >
+                <X className="w-4 h-4 stroke-[2.5]" />
+              </button>
+            </div>
+
+            {/* Scrollable Form Body */}
+            <form onSubmit={handleSubmit} className="p-6 overflow-y-auto overscroll-contain flex flex-col gap-5">
+              {/* Section 1: Medicine Identity */}
+              <div className="flex flex-col gap-3.5">
+                <div>
+                  <label htmlFor="med-name" className="text-[13px] font-bold text-[#1C1C1E] uppercase tracking-wider block mb-1.5">
+                    Medicine Name *
+                  </label>
+                  <input
+                    id="med-name"
+                    type="text"
+                    required
+                    autoFocus
+                    placeholder="e.g. Metformin 500mg"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="
+                      w-full min-h-[48px] px-4 py-2.5
+                      rounded-2xl bg-[#F8F9FB] border border-[#E5E5EA]
+                      text-[16px] font-semibold text-[#1C1C1E] placeholder:text-[#8E8E93]
+                      focus:bg-white focus:outline-none focus:border-[#007AFF] focus:ring-2 focus:ring-[#007AFF]/15
+                      transition-all shadow-xs
+                    "
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="med-purpose" className="text-[13px] font-bold text-[#1C1C1E] uppercase tracking-wider block mb-1.5">
+                    What is it for? <span className="font-normal text-[#8E8E93] text-xs lowercase">(optional)</span>
+                  </label>
+                  <input
+                    id="med-purpose"
+                    type="text"
+                    placeholder="e.g. Sugar / Diabetes, Blood Pressure"
+                    value={purpose}
+                    onChange={(e) => setPurpose(e.target.value)}
+                    className="
+                      w-full min-h-[48px] px-4 py-2.5
+                      rounded-2xl bg-[#F8F9FB] border border-[#E5E5EA]
+                      text-[16px] font-semibold text-[#1C1C1E] placeholder:text-[#8E8E93]
+                      focus:bg-white focus:outline-none focus:border-[#007AFF] focus:ring-2 focus:ring-[#007AFF]/15
+                      transition-all shadow-xs
+                    "
+                  />
+                </div>
+              </div>
+
+              {/* Section 2: Daily Schedule (Apple Toggle Switches) */}
+              <div className="rounded-2xl bg-[#F8F9FB] border border-[#E5E5EA] p-4 flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[13px] font-bold text-[#1C1C1E] uppercase tracking-wider">
+                    Daily Schedule
+                  </span>
+                  <span className="text-xs text-[#8E8E93]">
+                    Toggle times
+                  </span>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  {Object.entries(slots).map(([key, slot]) => {
+                    const SlotIcon = slot.icon;
+                    return (
+                      <div
+                        key={key}
+                        className="flex items-center justify-between p-2.5 rounded-xl bg-white border border-[#E5E5EA]/70 shadow-xs"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <div className={`
+                            w-8 h-8 rounded-lg flex items-center justify-center
+                            ${slot.enabled ? 'bg-[#EBF5FF] text-[#007AFF]' : 'bg-[#F2F2F7] text-[#8E8E93]'}
+                            transition-colors
+                          `}>
+                            <SlotIcon className="w-4 h-4 stroke-[2.2]" />
+                          </div>
+                          <div>
+                            <span className="text-[14px] font-bold text-[#1C1C1E] block leading-tight">
+                              {slot.label}
+                            </span>
+                            <span className="text-[11.5px] text-[#8E8E93] leading-tight">
+                              Typical: {slot.time}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Apple Switch */}
+                        <button
+                          type="button"
+                          onClick={() => toggleSlot(key)}
+                          aria-label={`Toggle ${slot.label}`}
+                          className={`
+                            relative w-12 h-7 rounded-full transition-colors duration-300 p-0.5
+                            ${slot.enabled ? 'bg-[#34C759]' : 'bg-[#E5E5EA]'}
+                          `}
+                        >
+                          <motion.div
+                            animate={{ x: slot.enabled ? 20 : 0 }}
+                            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                            className="w-6 h-6 rounded-full bg-white shadow-sm"
+                          />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Food Relation (Sliding Segmented Tab) */}
+                <div className="pt-2 border-t border-[#E5E5EA]/80">
+                  <span className="text-xs font-semibold text-[#8E8E93] uppercase tracking-wider block mb-2">
+                    Food timing
+                  </span>
+                  <div className="grid grid-cols-3 bg-[#E5E5EA]/60 rounded-full p-1 relative border border-[#E5E5EA]">
+                    {foodOptions.map((opt) => (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => setFoodRelation(opt.id)}
+                        className={`
+                          relative z-10 py-1.5 text-[12px] font-bold tracking-tight rounded-full transition-colors duration-200
+                          ${foodRelation === opt.id ? 'text-[#1C1C1E]' : 'text-[#8E8E93] hover:text-[#1C1C1E]'}
+                        `}
+                      >
+                        {opt.label}
+                        {foodRelation === opt.id && (
+                          <motion.div
+                            layoutId="activeFoodTab"
+                            className="absolute inset-0 rounded-full -z-10 bg-white shadow-xs border border-black/5"
+                            transition={TAB_SPRING}
+                          />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 3: Pack Size (Sliding Segmented Tab) */}
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-[13px] font-bold text-[#1C1C1E] uppercase tracking-wider">
+                    Pills in 1 Strip
+                  </label>
+                  <span className="text-xs text-[#8E8E93]">
+                    Standard Indian foil pack
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-4 bg-[#F2F2F7] rounded-full p-1 relative border border-[#E5E5EA]">
+                  {packSizeOptions.map((opt) => (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => handlePackSizeChange(opt)}
+                      className={`
+                        relative z-10 py-2 text-[12.5px] font-bold tracking-tight rounded-full transition-colors duration-200
+                        ${packSizeOption === opt ? 'text-[#1C1C1E]' : 'text-[#8E8E93] hover:text-[#1C1C1E]'}
+                      `}
+                    >
+                      {opt === 'CUSTOM' ? 'Other' : `${opt} tabs`}
+                      {packSizeOption === opt && (
+                        <motion.div
+                          layoutId="activeStripTab"
+                          className="absolute inset-0 rounded-full -z-10 bg-white shadow-xs border border-black/5"
+                          transition={TAB_SPRING}
+                        />
+                      )}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Custom Pack Size Stepper if Selected */}
+                {packSizeOption === 'CUSTOM' && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="pt-2"
+                  >
+                    <RollingStepper
+                      value={customPackSize}
+                      onChange={(val) => {
+                        setCustomPackSize(val);
+                        setActivePills(val);
+                      }}
+                      min={1}
+                      max={60}
+                      unit="tablets"
+                    />
+                  </motion.div>
+                )}
+              </div>
+
+              {/* Section 4: Starting Stock (Rolling 3D Steppers) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                {/* Full Unopened Strips */}
+                <div className="p-3.5 rounded-2xl bg-[#F8F9FB] border border-[#E5E5EA] flex flex-col gap-2">
+                  <div>
+                    <span className="text-[12.5px] font-bold text-[#1C1C1E] block">
+                      Full Strips Given
+                    </span>
+                    <span className="text-[11px] text-[#8E8E93]">
+                      Unopened strips in medicine box
+                    </span>
+                  </div>
+                  <RollingStepper
+                    value={fullStrips}
+                    onChange={setFullStrips}
+                    min={0}
+                    max={30}
+                    unit="strips"
+                  />
+                </div>
+
+                {/* Pills on Active Strip */}
+                <div className="p-3.5 rounded-2xl bg-[#F8F9FB] border border-[#E5E5EA] flex flex-col gap-2">
+                  <div>
+                    <span className="text-[12.5px] font-bold text-[#1C1C1E] block">
+                      Active Strip Pills
+                    </span>
+                    <span className="text-[11px] text-[#8E8E93]">
+                      Remaining in current open strip
+                    </span>
+                  </div>
+                  <RollingStepper
+                    value={activePills}
+                    onChange={setActivePills}
+                    min={0}
+                    max={packSizeOption === 'CUSTOM' ? customPackSize : parseInt(packSizeOption, 10)}
+                    unit="pills"
+                  />
+                </div>
+              </div>
+
+              {/* Footer Buttons */}
+              <div className="pt-3 border-t border-[#F2F2F7] flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="
+                    px-6 py-3 rounded-full text-sm font-semibold text-[#6E6E73]
+                    border border-[#E5E5EA] hover:bg-[#F2F2F7] active:scale-95 transition-all
+                  "
+                >
+                  Cancel
+                </button>
+
+                <motion.button
+                  whileTap={{ scale: 0.96 }}
+                  type="submit"
+                  disabled={!name.trim()}
+                  className="
+                    px-8 py-3.5 rounded-full text-sm font-bold text-white
+                    bg-[#1C1C1E] hover:bg-[#2C2C2E] disabled:opacity-40 disabled:cursor-not-allowed
+                    shadow-md transition-all
+                  "
+                >
+                  Save Medicine
+                </motion.button>
+              </div>
+            </form>
+          </motion.div>
         </div>
-
-        {/* What's it for */}
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="med-purpose" className="text-[15px] font-semibold text-[#1C1C1E]">
-            What is it for? <span className="font-normal text-[#8E8E93]">(optional)</span>
-          </label>
-          <input
-            id="med-purpose"
-            type="text"
-            placeholder="e.g. Sugar / Diabetes, Blood Pressure"
-            value={purpose}
-            onChange={(e) => setPurpose(e.target.value)}
-            className="
-              min-h-[48px] px-4 py-3
-              rounded-[14px] bg-white border border-[#E5E5EA]
-              text-[17px] text-[#1C1C1E] placeholder:text-[#8E8E93]
-              focus:outline-none focus:border-[#007AFF] focus:ring-2 focus:ring-[#007AFF]/20
-              shadow-sm
-            "
-          />
-        </div>
-
-        {/* When is it taken */}
-        <ChipSelect
-          label="When is it taken?"
-          options={timeOptions}
-          value={timeOfDay}
-          onChange={setTimeOfDay}
-          isMulti={true}
-          helper="Select all times that apply"
-        />
-
-        {/* Pills per strip */}
-        <ChipSelect
-          label="Pills in 1 strip"
-          options={stripSizeOptions}
-          value={stripSize}
-          onChange={handleStripSizeChange}
-          isMulti={false}
-        />
-
-        {stripSize === 'OTHER' && (
-          <StepperInput
-            label="Custom pills per strip"
-            value={customStripSize}
-            onChange={setCustomStripSize}
-            min={1}
-            max={30}
-            unit="tablets"
-          />
-        )}
-
-        {/* Full strips given */}
-        <StepperInput
-          label="Full unopened strips given to Mom/Dad"
-          value={fullStrips}
-          onChange={setFullStrips}
-          min={0}
-          max={50}
-          unit="strips"
-        />
-
-        {/* Pills left on active strip */}
-        <StepperInput
-          label="Pills left on current open strip"
-          value={activePills}
-          onChange={setActivePills}
-          min={0}
-          max={stripSize === 'OTHER' ? customStripSize : parseInt(stripSize, 10)}
-          unit="pills"
-          helper="If they just started a new strip, leave this at full"
-        />
-
-        {/* Submit */}
-        <div className="pt-3">
-          <PrimaryButton type="submit" fullWidth disabled={!name.trim()}>
-            Save Medicine
-          </PrimaryButton>
-        </div>
-      </form>
-    </GlassSheet>
+      )}
+    </AnimatePresence>
   );
 }
+
+export default AddMedicineSheet;
