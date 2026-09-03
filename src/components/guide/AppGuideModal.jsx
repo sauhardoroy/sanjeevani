@@ -10,13 +10,15 @@ import {
   Users,
   AlertCircle,
   Layers,
-  CheckCircle2,
+  PlusCircle,
+  ClipboardCheck,
   MessageCircle,
-  ChevronRight,
-  ArrowRight
+  ShieldCheck,
+  ArrowRight,
+  CheckCircle2
 } from 'lucide-react';
 
-const ITEM_WIDTH = 300;
+const ITEM_WIDTH = 324;
 const GAP = 16;
 const CONTAINER_WIDTH = ITEM_WIDTH + GAP;
 const DRAG_BUFFER = 40;
@@ -31,47 +33,147 @@ const SPRING_OPTIONS = {
 const GUIDE_CARDS = [
   {
     id: 1,
+    step: 1,
     badge: 'Dual Profiles',
-    title: 'Grandmother & Grandfather',
+    title: 'Separate Care for Mom & Dad',
     icon: Users,
-    description: 'Easily toggle between Mom\'s and Dad\'s medications using the circular icons at the top, or by simply swiping left and right anywhere on the home screen.',
-    scenario: 'Keep Grandmother\'s diabetes pills separate from Grandfather\'s BP medicine so their schedules and stocks are never mixed up.',
+    instructions: [
+      {
+        label: 'Top Circle Icons',
+        text: 'Tap the Left Circle for Grandmother, Right Circle for Grandfather at the top of your screen.',
+      },
+      {
+        label: 'Or Just Swipe',
+        text: 'Swipe left or right anywhere across the screen like flipping book pages to switch.',
+      },
+    ],
+    scenario: 'Grandmother takes diabetes medication while Grandfather takes BP tablets. Having separate screens ensures you never order or count the wrong person\'s medicine.',
     cta: 'Next: Refill Status',
   },
   {
     id: 2,
-    badge: 'Smart Sections',
-    title: 'Instant Refill Alerts',
+    step: 2,
+    badge: 'Refill Urgency',
+    title: '3 Instant Color Sections',
     icon: AlertCircle,
-    description: 'All medicines are automatically sorted into 3 clear sections: Critical Refill (🔴), Attention Required (🟡), and All Good (🟢) based on daily depletion.',
-    scenario: 'Glance at the home screen before visiting or ordering from 1mg/Apollo. If any medicine is in the Critical section, you know to reorder immediately.',
+    instructions: [
+      {
+        label: '🔴 Critical Refill',
+        text: 'Less than 7 days of medicine left in the house. Place a pharmacy order now.',
+      },
+      {
+        label: '🟡 Attention Required',
+        text: 'Active strip has only 2–3 pills left, or stock is running low.',
+      },
+      {
+        label: '🟢 All Good',
+        text: 'Plenty of medicine safe in reserve for more than 14 days.',
+      },
+    ],
+    scenario: 'Before calling Apollo Pharmacy or opening 1mg on your phone, check the top red section. If it\'s empty, your parents have plenty of supply.',
     cta: 'Next: Blister Strips',
   },
   {
     id: 3,
-    badge: 'Blister Foils',
-    title: 'Drop Zone Prediction',
+    step: 3,
+    badge: 'Active Strips',
+    title: 'Blister Pack "Drop Zone"',
     icon: Layers,
-    description: 'Expand any medicine card to view the physical silver blister pack. Sanjeevani predicts the "Drop Zone" when only 2–3 pills remain on an open strip.',
-    scenario: 'Grandparents often discard or open a new strip early when 2–3 pills are left. Sanjeevani accounts for this so you\'re never caught by an empty box.',
-    cta: 'Next: Physical Count',
+    instructions: [
+      {
+        label: 'Tap Any Card',
+        text: 'Expand any medicine card to view the physical blister pack and individual pill bubbles.',
+      },
+      {
+        label: 'The "Drop Zone"',
+        text: 'Sanjeevani warns you with an amber tag when only 2–3 pills remain on an open strip.',
+      },
+    ],
+    scenario: 'Elderly parents often discard nearly-finished strips early, or open a fresh strip while 2 pills remain on the old one. Sanjeevani accounts for this so you don\'t get surprised.',
+    cta: 'Next: Adding Medicines',
   },
   {
     id: 4,
-    badge: 'Physical Count',
-    title: 'Match Actual Strips',
-    icon: CheckCircle2,
-    description: 'Tap "Details & Actions" ➔ "Match Count" to tap physical blister dots directly and adjust counts. Tap "+ Found Another Open Strip" if multiple strips are in use.',
-    scenario: 'During your visit, tap the blister bubbles to match what is physically in their medicine box with one touch, or tap "Count Matches" if all is in sync.',
-    cta: 'Next: WhatsApp Updates',
+    step: 4,
+    badge: 'Prescriptions',
+    title: 'Adding a New Medicine',
+    icon: PlusCircle,
+    instructions: [
+      {
+        label: 'Floating (+) Button',
+        text: 'Tap the circular (+) button at the bottom right corner of the home screen.',
+      },
+      {
+        label: 'Select Profile',
+        text: 'Choose whether the prescription is for Grandmother or Grandfather.',
+      },
+      {
+        label: 'Set Dose & Packs',
+        text: 'Enter daily frequency (Morning, Noon, Night) and total unopened strips delivered.',
+      },
+    ],
+    scenario: 'Doctor prescribed a new tablet after their hospital checkup? Add it once in 20 seconds, and Sanjeevani tracks daily consumption automatically.',
+    cta: 'Next: Physical Count',
   },
   {
     id: 5,
-    badge: 'Family Updates',
-    title: 'WhatsApp & History',
+    step: 5,
+    badge: 'Physical Audit',
+    title: 'Weekend Visit Count Match',
+    icon: ClipboardCheck,
+    instructions: [
+      {
+        label: 'Details & Actions',
+        text: 'Tap "Details & Actions" on any card when you visit them at home.',
+      },
+      {
+        label: 'Tap the Dots',
+        text: 'Tap "Match Count" and tap the pill bubbles to match what is physically in their box.',
+      },
+      {
+        label: '+ Multiple Strips',
+        text: 'Tap "+ Found Another Open Strip" if you find multiple opened packs in use.',
+      },
+    ],
+    scenario: 'Visiting on Sunday? Check their medicine basket. If counts match what the app expects, tap "Count Matches" in 1 second. If pills were skipped, tap to sync.',
+    cta: 'Next: Family Sharing',
+  },
+  {
+    id: 6,
+    step: 6,
+    badge: 'Family Sharing',
+    title: '1-Tap WhatsApp Updates',
     icon: MessageCircle,
-    description: 'Tap "WhatsApp" on any card to send an instant, pre-formatted inventory update to your family or siblings without having to type anything.',
-    scenario: 'Keep your siblings informed in seconds: "Mom has 14 days of Metformin safe, 2 full strips remaining." Check the History tab to see past logs.',
+    instructions: [
+      {
+        label: 'WhatsApp Button',
+        text: 'Tap the green WhatsApp button located directly on any medicine card.',
+      },
+      {
+        label: 'Zero Typing Needed',
+        text: 'A clean, pre-formatted inventory summary opens directly in WhatsApp ready to send.',
+      },
+    ],
+    scenario: 'Need your sibling or spouse to buy medicines on their commute home? Tap WhatsApp to send: "Mom has 12 days left of Metformin, 2 full strips remaining."',
+    cta: 'Next: Peace of Mind',
+  },
+  {
+    id: 7,
+    step: 7,
+    badge: 'Peace of Mind',
+    title: 'Zero Tech for Parents',
+    icon: ShieldCheck,
+    instructions: [
+      {
+        label: 'No App for Parents',
+        text: 'Your elderly parents never touch or struggle with this smartphone app.',
+      },
+      {
+        label: 'History Tab',
+        text: 'Check the History tab at the bottom to see past verification dates and counts.',
+      },
+    ],
+    scenario: 'Keep all tracking in your pocket as the caring child. You stay in control while your parents take their medications on time without confusion.',
     cta: 'Got It, Let\'s Start',
   },
 ];
@@ -101,7 +203,7 @@ function CarouselCard({
     <motion.div
       style={{
         width: ITEM_WIDTH,
-        height: 440,
+        height: 510,
         rotateY,
         flexShrink: 0,
       }}
@@ -109,45 +211,60 @@ function CarouselCard({
       className="
         flex flex-col justify-between
         rounded-[32px] border-[1.6px] border-[#E5E5EA] bg-white
-        p-6 sm:p-7 shadow-xl cursor-grab active:cursor-grabbing select-none
+        p-6 shadow-xl cursor-grab active:cursor-grabbing select-none
       "
     >
-      <div>
-        {/* Top Icon & Badge Row */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F2F2F7] border border-[#E5E5EA] text-[#1C1C1E] shadow-xs">
-            <Icon size={26} strokeWidth={2.2} />
+      <div className="flex flex-col">
+        {/* Top Header: Icon + Step Counter Badge */}
+        <div className="flex items-center justify-between mb-3.5">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F2F2F7] border border-[#E5E5EA] text-[#1C1C1E] shadow-xs">
+            <Icon size={24} strokeWidth={2.2} />
           </div>
-          <span className="text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-[#F2F2F7] text-[#1C1C1E] border border-[#E5E5EA]">
-            {item.badge}
-          </span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] font-bold text-[#8E8E93] uppercase tracking-wider">
+              Step {item.step} of {itemCount}
+            </span>
+            <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#1C1C1E] text-white">
+              {item.badge}
+            </span>
+          </div>
         </div>
 
         {/* Title */}
-        <h3 className="text-[20px] font-bold text-[#1C1C1E] tracking-tight leading-snug mb-2">
+        <h3 className="text-[19px] sm:text-[20px] font-bold text-[#1C1C1E] tracking-tight leading-snug mb-3">
           {item.title}
         </h3>
 
-        {/* Feature Explanation */}
-        <p className="text-[13px] text-[#3A3A3C] leading-relaxed mb-3.5">
-          {item.description}
-        </p>
+        {/* Formatted Instructions List */}
+        <div className="flex flex-col gap-2 mb-3.5">
+          {item.instructions.map((inst, i) => (
+            <div key={i} className="flex items-start gap-2 text-[12px] sm:text-[12.5px] text-[#3A3A3C] leading-relaxed">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#007AFF] mt-1.5 shrink-0" />
+              <span>
+                <strong className="text-[#1C1C1E] font-semibold">{inst.label}:</strong> {inst.text}
+              </span>
+            </div>
+          ))}
+        </div>
 
-        {/* Real-world Scenario Callout */}
-        <div className="rounded-xl bg-[#F8F9FB] border border-[#E5E5EA] p-3 text-[12px] text-[#6E6E73] leading-relaxed">
-          <strong className="text-[#1C1C1E] font-semibold block mb-0.5">Real-life Scenario:</strong>
-          <span>{item.scenario}</span>
+        {/* Real-world Use Case Box */}
+        <div className="rounded-2xl bg-[#F8F9FB] border border-[#E5E5EA] p-3 text-[11.5px] text-[#6E6E73] leading-relaxed">
+          <div className="flex items-center gap-1.5 text-[#1C1C1E] font-bold mb-1">
+            <span className="text-xs">💡</span>
+            <span>Real-Life Scenario for Dad</span>
+          </div>
+          <p className="italic text-[#3A3A3C]">"{item.scenario}"</p>
         </div>
       </div>
 
-      {/* Action Button */}
+      {/* Action CTA Button */}
       <motion.button
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.96 }}
         onClick={onNext}
         className={`
-          w-full py-3 px-5 rounded-full font-bold text-xs shadow-xs
-          flex items-center justify-center gap-2 transition-colors
+          w-full py-3 px-5 rounded-full font-bold text-xs sm:text-[13px] shadow-xs
+          flex items-center justify-center gap-2 transition-colors mt-2
           ${isLast ? 'bg-[#34C759] text-white hover:bg-green-600' : 'bg-[#1C1C1E] text-white hover:bg-black'}
         `}
       >
@@ -186,7 +303,7 @@ export function AppGuideModal({ isOpen, onClose }) {
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 select-none">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 select-none">
           {/* Frosted Dark Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -205,13 +322,13 @@ export function AppGuideModal({ isOpen, onClose }) {
             className="relative z-10 flex flex-col items-center max-w-sm w-full"
           >
             {/* Header: Title & Close Button */}
-            <div className="w-full flex items-center justify-between px-2 mb-3 text-white">
+            <div className="w-full flex items-center justify-between px-2 mb-2.5 text-white">
               <div>
                 <h2 className="text-[17px] font-bold tracking-tight">
                   How to Use Sanjeevani
                 </h2>
                 <p className="text-[11.5px] text-white/70">
-                  Swipe or tap to explore features & scenarios
+                  Step {currentIndex + 1} of {GUIDE_CARDS.length} • Swipe to navigate
                 </p>
               </div>
               <button
@@ -227,7 +344,7 @@ export function AppGuideModal({ isOpen, onClose }) {
             {/* 3D Perspective Card Carousel */}
             <div
               className="relative overflow-hidden"
-              style={{ width: ITEM_WIDTH, height: 440 }}
+              style={{ width: ITEM_WIDTH, height: 510 }}
             >
               <motion.div
                 className="flex"
@@ -258,7 +375,7 @@ export function AppGuideModal({ isOpen, onClose }) {
             </div>
 
             {/* Pagination Indicators */}
-            <div className="mt-4 flex items-center gap-2">
+            <div className="mt-3 flex items-center gap-1.5">
               {GUIDE_CARDS.map((_, i) => (
                 <button
                   key={i}
