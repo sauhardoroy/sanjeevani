@@ -1,65 +1,63 @@
-import React, { useEffect, useState } from 'react';
-import { AnimatePresence, motion } from 'motion/react';
+import React from 'react';
+import { motion } from 'motion/react';
 import { Home, ClipboardList, Settings } from 'lucide-react';
 
+const DROPLET_SPRING = {
+  type: 'spring',
+  stiffness: 460,
+  damping: 30,
+  mass: 0.8,
+};
+
 /**
- * GlassBottomNav — DiscreteTabs Architecture
- * Expanding active pill with spring animation, 
- * sweeping light shine effect, and frosted Apple glass container.
+ * GlassBottomNav — Pill-Shaped Liquid Droplet Architecture
+ * - 100% stable fixed dock dimensions (zero jumping or shifting)
+ * - Ultra-high opacity Apple frosted glass material (bg-white/95)
+ * - Fluid liquid droplet indicator that slides smoothly between tabs via layoutId
+ * - Clean pill shape with zero distracting gloss sweep
  */
 export function GlassBottomNav({ currentTab, onSelectTab }) {
-  const [shine, setShine] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setShine(true), 400);
-    return () => {
-      clearTimeout(timer);
-      setShine(false);
-    };
-  }, [currentTab]);
-
   const tabs = [
     {
       id: 'home',
       label: 'Home',
-      icon: <Home size={18} strokeWidth={2.3} />,
-      activeColor: 'text-white',
+      icon: Home,
     },
     {
       id: 'history',
       label: 'History',
-      icon: <ClipboardList size={18} strokeWidth={2.3} />,
-      activeColor: 'text-white',
+      icon: ClipboardList,
     },
     {
       id: 'settings',
       label: 'Settings',
-      icon: <Settings size={18} strokeWidth={2.3} />,
-      activeColor: 'text-white',
+      icon: Settings,
     },
   ];
 
   return (
     <nav
       aria-label="Main navigation"
-      className="fixed bottom-5 inset-x-0 z-40 mx-auto w-fit flex items-center justify-center pointer-events-auto"
+      className="fixed bottom-5 inset-x-0 z-40 mx-auto w-fit flex items-center justify-center pointer-events-auto select-none"
     >
-      <motion.div
-        layout
+      {/* Pill-Shaped Frosted Glass Panel (Increased Opacity & Hairline Border) */}
+      <div
         className="
-          flex items-center justify-center gap-1.5 p-1.5
-          rounded-2xl bg-white/85 backdrop-blur-2xl
-          border border-white/80
-          shadow-[0_8px_32px_rgba(0,0,0,0.08),0_2px_8px_rgba(0,0,0,0.04)]
+          relative flex items-center justify-center gap-1 p-1.5
+          rounded-full bg-white/95 backdrop-blur-3xl
+          border border-white/90
+          shadow-[0_12px_36px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.04)]
         "
       >
         {tabs.map((tab) => {
+          const Icon = tab.icon;
           const isActive = currentTab === tab.id;
 
           return (
-            <button
+            <motion.button
               key={tab.id}
               type="button"
+              whileTap={{ scale: 0.92 }}
               onClick={() => onSelectTab?.(tab.id)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
@@ -67,77 +65,40 @@ export function GlassBottomNav({ currentTab, onSelectTab }) {
                   onSelectTab?.(tab.id);
                 }
               }}
-              className="relative focus:outline-none select-none"
+              className={`
+                relative h-10 px-4 rounded-full
+                flex items-center justify-center gap-2
+                text-[13px] font-bold tracking-tight
+                transition-colors duration-200 focus:outline-none
+                ${isActive ? 'text-white' : 'text-[#8E8E93] hover:text-[#1C1C1E]'}
+              `}
             >
-              <motion.div
-                layout="position"
-                transition={{
-                  type: 'spring',
-                  stiffness: 260,
-                  damping: 22,
-                  mass: 0.9,
-                }}
-                className="flex h-11 items-center justify-center"
-              >
-                <div
-                  className={`
-                    flex h-10 cursor-pointer items-center justify-center rounded-xl px-3.5
-                    transition-all duration-200
-                    ${
-                      isActive
-                        ? 'bg-[#1C1C1E] text-white shadow-xs'
-                        : 'bg-transparent text-[#8E8E93] hover:bg-[#F2F2F7] hover:text-[#1C1C1E]'
-                    }
-                  `}
-                  tabIndex={0}
-                >
-                  <motion.div
-                    className={`flex items-center justify-center transition-colors duration-200 ${
-                      isActive ? tab.activeColor : 'text-[#8E8E93]'
-                    }`}
-                  >
-                    {tab.icon}
-                  </motion.div>
+              {/* Fluid Liquid Droplet Indicator */}
+              {isActive && (
+                <motion.div
+                  layoutId="activeNavDroplet"
+                  transition={DROPLET_SPRING}
+                  className="
+                    absolute inset-0 rounded-full
+                    bg-[#1C1C1E]
+                    shadow-[0_2px_8px_rgba(0,0,0,0.18)]
+                  "
+                />
+              )}
 
-                  <motion.span
-                    animate={{
-                      width: isActive ? 'auto' : 0,
-                      opacity: isActive ? 1 : 0,
-                      marginLeft: isActive ? 8 : 0,
-                    }}
-                    transition={{
-                      type: 'spring',
-                      stiffness: 260,
-                      damping: 22,
-                      mass: 0.9,
-                    }}
-                    className={`
-                      relative overflow-hidden text-[13px] font-bold tracking-tight whitespace-nowrap transition-colors duration-200
-                      ${isActive ? tab.activeColor : 'text-[#8E8E93]'}
-                    `}
-                  >
-                    {tab.label}
+              {/* Tab Icon (Elevated above droplet) */}
+              <span className="relative z-10 flex items-center justify-center">
+                <Icon size={17} strokeWidth={isActive ? 2.5 : 2} />
+              </span>
 
-                    <AnimatePresence>
-                      {isActive && shine && (
-                        <motion.span
-                          initial={{ left: '-120%' }}
-                          animate={{ left: '120%' }}
-                          transition={{
-                            duration: 0.6,
-                            ease: 'linear',
-                          }}
-                          className="absolute top-0 bottom-0 w-12 bg-gradient-to-r from-transparent via-white/35 to-transparent pointer-events-none"
-                        />
-                      )}
-                    </AnimatePresence>
-                  </motion.span>
-                </div>
-              </motion.div>
-            </button>
+              {/* Tab Label (Elevated above droplet) */}
+              <span className="relative z-10 font-bold whitespace-nowrap">
+                {tab.label}
+              </span>
+            </motion.button>
           );
         })}
-      </motion.div>
+      </div>
     </nav>
   );
 }
