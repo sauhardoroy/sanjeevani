@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { GlassTopBar } from '../components/glass/GlassTopBar';
 import { GlassFAB } from '../components/glass/GlassFAB';
 import { MedicineCard } from '../components/content/MedicineCard';
 import { evaluateMedicineStatus } from '../lib/depletion';
@@ -92,47 +91,18 @@ export function Home({
     }
   };
 
-  // Greeting based on time of day
-  const greeting = useMemo(() => {
-    const hour = new Date().getHours();
-    const name = settings?.caregiverName || 'Dad';
-    if (hour < 12) return `Good morning, ${name}`;
-    if (hour < 17) return `Good afternoon, ${name}`;
-    return `Good evening, ${name}`;
-  }, [settings]);
-
-  const subtitle = `${currentMedicines.length} medicine${currentMedicines.length === 1 ? '' : 's'} tracked for ${currentPersonName}`;
-
   return (
     <div className="min-h-screen bg-[#F2F2F7] flex flex-col pb-28">
-      {/* Functional Glass Top Bar */}
-      <GlassTopBar
-        title={greeting}
-        subtitle={subtitle}
-        rightAction={
-          onOpenGuide && (
-            <button
-              type="button"
-              onClick={onOpenGuide}
-              aria-label="App Guide"
-              title="How to use Sanjeevani"
-              className="
-                h-9 w-9 flex items-center justify-center rounded-full
-                bg-white hover:bg-[#F2F2F7] text-[#1C1C1E]
-                border border-[#E5E5EA] shadow-xs active:scale-92 transition-all
-              "
-            >
-              <HelpCircle size={18} strokeWidth={2.2} />
-            </button>
-          )
-        }
-      />
+      {/* ------------------------------------------------------------------ */}
+      {/* Top Floating Control Bar (Two Circles Inside a Pill + Help Button) */}
+      {/* ------------------------------------------------------------------ */}
+      <div className="max-w-lg mx-auto w-full px-4 pt-4 pb-2 flex items-center justify-between select-none">
+        {/* Invisible left balance spacer */}
+        <div className="w-9 h-9" />
 
-      {/* ------------------------------------------------------------------ */}
-      {/* Two Circles Inside a Pill (No Text Inside, Distinct Black & White Icons) */}
-      {/* ------------------------------------------------------------------ */}
-      <div className="mx-auto w-fit flex flex-col items-center justify-center pt-3 pb-1 select-none">
-        <div className="relative flex items-center gap-1 rounded-full border-[1.6px] border-[#E5E5EA] bg-white/95 backdrop-blur-3xl p-1 shadow-xs">
+        {/* Center: Two Circles Inside a Pill */}
+        <div className="flex flex-col items-center justify-center">
+          <div className="relative flex items-center gap-1 rounded-full border-[1.6px] border-[#E5E5EA] bg-white/95 backdrop-blur-3xl p-1 shadow-xs">
           
           {/* Circle Option 1: Grandmother */}
           <button
@@ -243,9 +213,31 @@ export function Home({
         <div className="flex items-center gap-2 pt-1.5 text-[11.5px] font-semibold text-[#8E8E93]">
           <span className="text-[#1C1C1E]">{currentPersonName}</span>
           <span>•</span>
+          <span className="font-normal">{currentMedicines.length} meds</span>
+          <span>•</span>
           <span className="font-normal">Swipe to switch</span>
         </div>
       </div>
+
+      {/* Right: Help Button */}
+      {onOpenGuide ? (
+        <button
+          type="button"
+          onClick={onOpenGuide}
+          aria-label="App Guide"
+          title="How to use Sanjeevani"
+          className="
+            h-9 w-9 flex items-center justify-center rounded-full
+            bg-white hover:bg-[#F2F2F7] text-[#1C1C1E]
+            border border-[#E5E5EA] shadow-xs active:scale-92 transition-all
+          "
+        >
+          <HelpCircle size={17} strokeWidth={2.2} />
+        </button>
+      ) : (
+        <div className="w-9 h-9" />
+      )}
+    </div>
 
       {/* ------------------------------------------------------------------ */}
       {/* Swipeable Screen Container (Framer Motion Drag & Transitions) */}
