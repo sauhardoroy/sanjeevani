@@ -355,8 +355,9 @@ export function MedicineCard({
                             {stripPills} left
                           </span>
                           {isDropZone && (
-                            <span className="text-[10px] font-bold text-[#B45309] bg-[#FFF8EB] border border-[#FF9F0A]/40 px-1.5 py-0.5 rounded-full">
-                              Drop Zone
+                            <span className="flex items-center gap-1 text-[10.5px] font-medium text-[#8E8E93] bg-white border border-[#E5E5EA] px-2 py-0.5 rounded-full shadow-xs">
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#FF9F0A]" />
+                              <span>Low</span>
                             </span>
                           )}
                         </div>
@@ -493,8 +494,8 @@ export function MedicineCard({
                       onClick={handleAddStrip}
                       className="
                         flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl
-                        border border-dashed border-[#007AFF]/40 bg-[#007AFF]/5 text-[#007AFF]
-                        text-[12px] font-bold hover:bg-[#007AFF]/10 transition-colors
+                        border border-dashed border-[#D1D1D6] bg-[#F8F9FB] text-[#1C1C1E]
+                        text-[12px] font-semibold hover:bg-[#F2F2F7] transition-colors
                       "
                     >
                       <Plus size={14} />
@@ -540,7 +541,7 @@ export function MedicineCard({
                     </div>
                   </motion.div>
                 ) : (
-                  /* 3. Normal Caregiver Quick Action Buttons */
+                  /* 3. Normal Caregiver Quick Action Buttons (Minimalist Monochrome) */
                   <div className="grid grid-cols-3 gap-2">
                     {/* Count Matches */}
                     <motion.button
@@ -556,7 +557,7 @@ export function MedicineCard({
                         flex flex-col items-center justify-center gap-1 shadow-xs transition-colors
                       "
                     >
-                      <CheckCircle2 size={16} className="text-[#34C759] shrink-0 stroke-[2]" />
+                      <CheckCircle2 size={16} className="text-[#1C1C1E] shrink-0 stroke-[2]" />
                       <span>Count Matches</span>
                     </motion.button>
 
@@ -574,7 +575,7 @@ export function MedicineCard({
                         flex flex-col items-center justify-center gap-1 shadow-xs transition-colors
                       "
                     >
-                      <Edit3 size={16} className="text-[#007AFF] shrink-0 stroke-[2]" />
+                      <Edit3 size={16} className="text-[#1C1C1E] shrink-0 stroke-[2]" />
                       <span>Match Count</span>
                     </motion.button>
 
@@ -592,7 +593,7 @@ export function MedicineCard({
                         flex flex-col items-center justify-center gap-1 shadow-xs transition-colors
                       "
                     >
-                      <AlertCircle size={16} className="text-[#FF9F0A] shrink-0 stroke-[2]" />
+                      <AlertCircle size={16} className="text-[#1C1C1E] shrink-0 stroke-[2]" />
                       <span>Discarded Early</span>
                     </motion.button>
                   </div>

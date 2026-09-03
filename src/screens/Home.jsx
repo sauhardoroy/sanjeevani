@@ -3,14 +3,14 @@ import { GlassTopBar } from '../components/glass/GlassTopBar';
 import { GlassFAB } from '../components/glass/GlassFAB';
 import { MedicineCard } from '../components/content/MedicineCard';
 import { evaluateMedicineStatus } from '../lib/depletion';
-import { PlusCircle, Heart, Check, ShieldCheck, AlertCircle, AlertTriangle } from 'lucide-react';
+import { PlusCircle, Heart, Check } from 'lucide-react';
 
 /**
  * Home Screen — Dashboard for Dad
- * Organizes medicines into 3 clear, separate Apple-style sections:
- * 1. Critical (Refill needed immediately)
- * 2. Attention Required (Active strip drop zone or low stock)
- * 3. All Good (Safe & normal supply)
+ * Ultra-minimalist Apple HIG aesthetic with restrained semantic accents:
+ * 1. Critical (Subtle red dot)
+ * 2. Attention Required (Subtle amber dot)
+ * 3. All Good (Subtle green dot)
  */
 export function Home({ 
   medicines = [], 
@@ -71,21 +71,17 @@ export function Home({
         {medicines.length > 0 ? (
           <>
             {/* ------------------------------------------------------------ */}
-            {/* Section 1: Critical (Red) */}
+            {/* Section 1: Critical */}
             {/* ------------------------------------------------------------ */}
             <section className="flex flex-col gap-3">
               <div className="flex items-center justify-between px-1">
                 <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#FF3B30] shadow-xs" />
-                  <h2 className="text-[13px] font-bold uppercase tracking-wider text-[#1C1C1E]">
+                  <span className="w-2 h-2 rounded-full bg-[#FF3B30]" />
+                  <h2 className="text-[12.5px] font-bold uppercase tracking-wider text-[#1C1C1E]">
                     Critical Refill
                   </h2>
                 </div>
-                <span className={`text-[11.5px] font-bold px-2.5 py-0.5 rounded-full ${
-                  criticalMeds.length > 0 
-                    ? 'bg-[#FF3B30]/10 text-[#FF3B30]' 
-                    : 'bg-[#E5E5EA]/70 text-[#8E8E93]'
-                }`}>
+                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#E5E5EA] text-[#1C1C1E]">
                   {criticalMeds.length}
                 </span>
               </div>
@@ -103,29 +99,25 @@ export function Home({
                   ))}
                 </div>
               ) : (
-                <div className="py-3 px-4 rounded-2xl bg-white/70 border border-[#E5E5EA] text-[12.5px] font-medium text-[#8E8E93] flex items-center justify-center gap-2 shadow-xs">
-                  <Check size={14} className="text-[#34C759] stroke-[2.5]" />
+                <div className="py-2.5 px-4 rounded-2xl bg-white/60 border border-[#E5E5EA] text-[12px] font-medium text-[#8E8E93] flex items-center justify-center gap-2">
+                  <Check size={13} className="text-[#8E8E93] stroke-[2.5]" />
                   <span>No critical refills needed</span>
                 </div>
               )}
             </section>
 
             {/* ------------------------------------------------------------ */}
-            {/* Section 2: Attention Required (Amber) */}
+            {/* Section 2: Attention Required */}
             {/* ------------------------------------------------------------ */}
             <section className="flex flex-col gap-3">
               <div className="flex items-center justify-between px-1">
                 <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#FF9F0A] shadow-xs" />
-                  <h2 className="text-[13px] font-bold uppercase tracking-wider text-[#1C1C1E]">
+                  <span className="w-2 h-2 rounded-full bg-[#FF9F0A]" />
+                  <h2 className="text-[12.5px] font-bold uppercase tracking-wider text-[#1C1C1E]">
                     Attention Required
                   </h2>
                 </div>
-                <span className={`text-[11.5px] font-bold px-2.5 py-0.5 rounded-full ${
-                  attentionMeds.length > 0 
-                    ? 'bg-[#FF9F0A]/12 text-[#D97706]' 
-                    : 'bg-[#E5E5EA]/70 text-[#8E8E93]'
-                }`}>
+                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#E5E5EA] text-[#1C1C1E]">
                   {attentionMeds.length}
                 </span>
               </div>
@@ -143,29 +135,25 @@ export function Home({
                   ))}
                 </div>
               ) : (
-                <div className="py-3 px-4 rounded-2xl bg-white/70 border border-[#E5E5EA] text-[12.5px] font-medium text-[#8E8E93] flex items-center justify-center gap-2 shadow-xs">
-                  <Check size={14} className="text-[#34C759] stroke-[2.5]" />
+                <div className="py-2.5 px-4 rounded-2xl bg-white/60 border border-[#E5E5EA] text-[12px] font-medium text-[#8E8E93] flex items-center justify-center gap-2">
+                  <Check size={13} className="text-[#8E8E93] stroke-[2.5]" />
                   <span>No strips in early discard risk</span>
                 </div>
               )}
             </section>
 
             {/* ------------------------------------------------------------ */}
-            {/* Section 3: All Good (Green) */}
+            {/* Section 3: All Good */}
             {/* ------------------------------------------------------------ */}
             <section className="flex flex-col gap-3">
               <div className="flex items-center justify-between px-1">
                 <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#34C759] shadow-xs" />
-                  <h2 className="text-[13px] font-bold uppercase tracking-wider text-[#1C1C1E]">
+                  <span className="w-2 h-2 rounded-full bg-[#34C759]" />
+                  <h2 className="text-[12.5px] font-bold uppercase tracking-wider text-[#1C1C1E]">
                     All Good
                   </h2>
                 </div>
-                <span className={`text-[11.5px] font-bold px-2.5 py-0.5 rounded-full ${
-                  allGoodMeds.length > 0 
-                    ? 'bg-[#34C759]/12 text-[#2E7D32]' 
-                    : 'bg-[#E5E5EA]/70 text-[#8E8E93]'
-                }`}>
+                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#E5E5EA] text-[#1C1C1E]">
                   {allGoodMeds.length}
                 </span>
               </div>
@@ -183,7 +171,7 @@ export function Home({
                   ))}
                 </div>
               ) : (
-                <div className="py-3 px-4 rounded-2xl bg-white/70 border border-[#E5E5EA] text-[12.5px] font-medium text-[#8E8E93] flex items-center justify-center gap-2 shadow-xs">
+                <div className="py-2.5 px-4 rounded-2xl bg-white/60 border border-[#E5E5EA] text-[12px] font-medium text-[#8E8E93] flex items-center justify-center gap-2">
                   <span>No medicines currently in safe supply</span>
                 </div>
               )}
@@ -191,22 +179,22 @@ export function Home({
           </>
         ) : (
           /* Empty State */
-          <div className="mt-12 flex flex-col items-center text-center p-8 bg-white rounded-3xl border border-[#E5E5EA] shadow-apple-card">
-            <div className="w-16 h-16 rounded-full bg-[#007AFF]/10 flex items-center justify-center text-[#007AFF] mb-4">
-              <PlusCircle className="w-8 h-8" />
+          <div className="mt-12 flex flex-col items-center text-center p-8 bg-white rounded-3xl border border-[#E5E5EA] shadow-xs">
+            <div className="w-14 h-14 rounded-full bg-[#F2F2F7] flex items-center justify-center text-[#1C1C1E] mb-4">
+              <PlusCircle className="w-7 h-7" />
             </div>
-            <h3 className="text-[20px] font-bold text-[#1C1C1E] mb-1">
+            <h3 className="text-[19px] font-bold text-[#1C1C1E] mb-1">
               No Medicines Added Yet
             </h3>
-            <p className="text-[15px] text-[#6E6E73] max-w-xs mb-6 leading-relaxed">
-              Tap the blue <strong>+ button</strong> below to add Mom & Dad's first medicine in under 30 seconds.
+            <p className="text-[14px] text-[#6E6E73] max-w-xs mb-6 leading-relaxed">
+              Tap the <strong>+ button</strong> below to add Mom & Dad's first medicine.
             </p>
           </div>
         )}
 
-        {/* Loving Reassurance Note */}
-        <div className="mt-2 p-3.5 rounded-2xl bg-[#EBF5FF] border border-[#007AFF]/20 text-center flex items-center justify-center gap-2 text-[13px] text-[#0066CC] font-medium shadow-sm">
-          <Heart className="w-4 h-4 fill-[#007AFF] text-[#007AFF] shrink-0" />
+        {/* Minimalist Loving Reassurance Note */}
+        <div className="mt-2 p-3 rounded-2xl bg-white/60 border border-[#E5E5EA] text-center flex items-center justify-center gap-2 text-[12.5px] text-[#6E6E73] font-medium">
+          <Heart className="w-3.5 h-3.5 fill-[#8E8E93] text-[#8E8E93] shrink-0" />
           <span>Zero smartphone tech needed for Grandma & Grandpa</span>
         </div>
       </main>
