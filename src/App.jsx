@@ -17,12 +17,20 @@ import { GlassBottomNav } from './components/glass/GlassBottomNav';
 import { Toast } from './components/content/Toast';
 import { AppGuideModal } from './components/guide/AppGuideModal';
 
+const HAS_SEEN_GUIDE_KEY = 'sanjeevani_has_seen_guide';
+
 export function App() {
   const [appData, setAppData] = useState(getData());
   const [currentTab, setCurrentTab] = useState('home');
   const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
   const [addSheetRecipient, setAddSheetRecipient] = useState('GRANDMOTHER');
-  const [isGuideOpen, setIsGuideOpen] = useState(false);
+  const [isGuideOpen, setIsGuideOpen] = useState(() => {
+    try {
+      return !localStorage.getItem(HAS_SEEN_GUIDE_KEY);
+    } catch {
+      return true;
+    }
+  });
   const [toast, setToast] = useState(null);
 
   // Subscribe to storage changes
@@ -61,7 +69,21 @@ export function App() {
     }
   };
 
+  const handleCloseGuide = () => {
+    try {
+      localStorage.setItem(HAS_SEEN_GUIDE_KEY, 'true');
+    } catch (e) {
+      console.error(e);
+    }
+    setIsGuideOpen(false);
+  };
+
   const handleResetData = () => {
+    try {
+      localStorage.removeItem(HAS_SEEN_GUIDE_KEY);
+    } catch (e) {
+      console.error(e);
+    }
     resetToDemoData();
   };
 
@@ -126,7 +148,7 @@ export function App() {
       {/* 3D CardSwipe App Guide & Tutorial Modal */}
       <AppGuideModal
         isOpen={isGuideOpen}
-        onClose={() => setIsGuideOpen(false)}
+        onClose={handleCloseGuide}
       />
     </div>
   );
