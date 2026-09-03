@@ -10,7 +10,6 @@ import {
 } from './lib/storage';
 import { reconcileAudit } from './lib/depletion';
 import { Home } from './screens/Home';
-import { MedicineDetail } from './screens/MedicineDetail';
 import { History } from './screens/History';
 import { Settings } from './screens/Settings';
 import { AddMedicineSheet } from './screens/AddMedicineSheet';
@@ -20,7 +19,6 @@ import { Toast } from './components/content/Toast';
 export function App() {
   const [appData, setAppData] = useState(getData());
   const [currentTab, setCurrentTab] = useState('home');
-  const [selectedMedicineId, setSelectedMedicineId] = useState(null);
   const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
   const [toast, setToast] = useState(null);
 
@@ -36,16 +34,6 @@ export function App() {
     setToast({ message, type });
   };
 
-  const selectedMedicine = appData.medicines?.find(m => m.id === selectedMedicineId) || null;
-
-  const handleSelectMedicine = (med) => {
-    setSelectedMedicineId(med.id);
-  };
-
-  const handleBack = () => {
-    setSelectedMedicineId(null);
-  };
-
   const handleSaveMedicine = (newMed) => {
     saveMedicine(newMed);
     showToast(`Added ${newMed.name}`);
@@ -53,7 +41,6 @@ export function App() {
 
   const handleDeleteMedicine = (id) => {
     deleteMedicine(id);
-    setSelectedMedicineId(null);
     showToast('Medicine removed');
   };
 
@@ -71,7 +58,6 @@ export function App() {
 
   const handleResetData = () => {
     resetToDemoData();
-    setSelectedMedicineId(null);
   };
 
   return (
@@ -86,50 +72,36 @@ export function App() {
       )}
 
       {/* Screen Routing */}
-      {selectedMedicine ? (
-        <MedicineDetail
-          medicine={selectedMedicine}
+      {currentTab === 'home' && (
+        <Home
+          medicines={appData.medicines}
           settings={appData.settings}
-          onBack={handleBack}
           onAudit={handleAudit}
           onDelete={handleDeleteMedicine}
+          onOpenAddSheet={() => setIsAddSheetOpen(true)}
         />
-      ) : (
-        <>
-          {currentTab === 'home' && (
-            <Home
-              medicines={appData.medicines}
-              settings={appData.settings}
-              onSelectMedicine={handleSelectMedicine}
-              onOpenAddSheet={() => setIsAddSheetOpen(true)}
-            />
-          )}
-
-          {currentTab === 'history' && (
-            <History
-              auditLogs={appData.auditLogs}
-            />
-          )}
-
-          {currentTab === 'settings' && (
-            <Settings
-              settings={appData.settings}
-              onUpdateSettings={updateSettings}
-              onResetData={handleResetData}
-              onShowToast={showToast}
-            />
-          )}
-
-          {/* Floating Glass Bottom Nav */}
-          <GlassBottomNav
-            currentTab={currentTab}
-            onSelectTab={(tab) => {
-              setSelectedMedicineId(null);
-              setCurrentTab(tab);
-            }}
-          />
-        </>
       )}
+
+      {currentTab === 'history' && (
+        <History
+          auditLogs={appData.auditLogs}
+        />
+      )}
+
+      {currentTab === 'settings' && (
+        <Settings
+          settings={appData.settings}
+          onUpdateSettings={updateSettings}
+          onResetData={handleResetData}
+          onShowToast={showToast}
+        />
+      )}
+
+      {/* Floating Glass Bottom Nav */}
+      <GlassBottomNav
+        currentTab={currentTab}
+        onSelectTab={(tab) => setCurrentTab(tab)}
+      />
 
       {/* Add Medicine Glass Bottom Sheet */}
       <AddMedicineSheet

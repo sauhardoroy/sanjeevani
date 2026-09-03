@@ -5,6 +5,21 @@
 
 const STORAGE_KEY = 'sanjeevani_data';
 
+export const DEFAULT_MEDICINE_IMAGES = {
+  'med-01': 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=1000', // Metformin (Pills & blister)
+  'med-02': 'https://images.unsplash.com/photo-1471864190281-a93a3070b6de?auto=format&fit=crop&q=80&w=1000', // Telmisartan (Capsules)
+  'med-03': 'https://images.unsplash.com/photo-1550572017-edd951aa8f72?auto=format&fit=crop&q=80&w=1000', // Eco-sprin (Blister strip)
+  default: 'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?auto=format&fit=crop&q=80&w=1000'
+};
+
+export function getMedicineImage(medicine) {
+  if (medicine?.imageUrl) return medicine.imageUrl;
+  if (medicine?.id && DEFAULT_MEDICINE_IMAGES[medicine.id]) {
+    return DEFAULT_MEDICINE_IMAGES[medicine.id];
+  }
+  return DEFAULT_MEDICINE_IMAGES.default;
+}
+
 export const INITIAL_DEMO_DATA = {
   settings: {
     caregiverName: 'Dad',
@@ -17,6 +32,7 @@ export const INITIAL_DEMO_DATA = {
       id: 'med-01',
       name: 'Metformin 500mg',
       purpose: 'Sugar / Diabetes',
+      imageUrl: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=1000',
       schedule: {
         timeOfDay: ['MORNING', 'NIGHT'],
         pillsPerDose: 1.0,
@@ -36,6 +52,7 @@ export const INITIAL_DEMO_DATA = {
       id: 'med-02',
       name: 'Telmisartan 40mg',
       purpose: 'Blood Pressure',
+      imageUrl: 'https://images.unsplash.com/photo-1471864190281-a93a3070b6de?auto=format&fit=crop&q=80&w=1000',
       schedule: {
         timeOfDay: ['MORNING'],
         pillsPerDose: 1.0,
@@ -55,6 +72,7 @@ export const INITIAL_DEMO_DATA = {
       id: 'med-03',
       name: 'Eco-sprin 75mg',
       purpose: 'Heart & Circulation',
+      imageUrl: 'https://images.unsplash.com/photo-1550572017-edd951aa8f72?auto=format&fit=crop&q=80&w=1000',
       schedule: {
         timeOfDay: ['NIGHT'],
         pillsPerDose: 1.0,
@@ -117,7 +135,15 @@ export function getData() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_DEMO_DATA));
       return INITIAL_DEMO_DATA;
     }
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    // Ensure demo medicines have imageUrls even if stored previously without them
+    if (Array.isArray(parsed.medicines)) {
+      parsed.medicines = parsed.medicines.map(m => ({
+        ...m,
+        imageUrl: m.imageUrl || getMedicineImage(m)
+      }));
+    }
+    return parsed;
   } catch (err) {
     console.error('Error reading localStorage:', err);
     return INITIAL_DEMO_DATA;
@@ -145,13 +171,17 @@ export function getMedicineById(id) {
 export function saveMedicine(medicine) {
   const data = getData();
   const index = data.medicines.findIndex(m => m.id === medicine.id);
+  const medWithImg = {
+    ...medicine,
+    imageUrl: medicine.imageUrl || getMedicineImage(medicine)
+  };
   if (index >= 0) {
-    data.medicines[index] = medicine;
+    data.medicines[index] = medWithImg;
   } else {
-    data.medicines.push(medicine);
+    data.medicines.push(medWithImg);
   }
   saveData(data);
-  return medicine;
+  return medWithImg;
 }
 
 export function deleteMedicine(id) {
