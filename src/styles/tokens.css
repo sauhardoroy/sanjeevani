@@ -1,0 +1,55 @@
+/* =========================================================
+   Apple HIG Design Tokens for Project Sanjeevani PWA
+   ========================================================= */
+
+:root {
+  /* Apple sRGB Color Palette */
+  --color-green: #34C759;
+  --color-amber: #FF9F0A;
+  --color-red: #FF3B30;
+  --color-blue: #007AFF;
+  --color-bg: #F2F2F7;
+  --color-surface: #FFFFFF;
+  --color-text-primary: #1C1C1E;
+  --color-text-secondary: #6E6E73;
+  --color-separator: #E5E5EA;
+
+  /* Concentricity Scale */
+  --radius-sheet: 28px;
+  --radius-nav: 24px;
+  --radius-card: 20px;
+  --radius-button: 14px;
+  --radius-chip: 10px;
+
+  /* Typography Scales */
+  --font-large-title: 30px;
+  --font-title: 20px;
+  --font-body: 17px;
+  --font-caption: 14px;
+  --font-floor: 14px;
+
+  /* Min Touch Target */
+  --touch-target-min: 48px;
+
+  /* Functional Layer Glass Spec */
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-blur: blur(24px) saturate(160%);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.5);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+/* Glass surface utility (FUNCTIONAL LAYER ONLY) */
+.glass-surface {
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  background: var(--glass-bg);
+  border: var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
+/* Scrim backdrop for modal bottom sheet */
+.scrim-backdrop {
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}

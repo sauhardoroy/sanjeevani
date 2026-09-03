@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad512" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0A84FF" />
+      <stop offset="100%" stop-color="#0055D4" />
+    </linearGradient>
+    <filter id="shadow512" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-opacity="0.25" />
+    </filter>
+  </defs>
+  
+  <!-- Apple squircle background -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad512)" />
+  
+  <!-- White Blister Card Base with subtle shadow -->
+  <g filter="url(#shadow512)">
+    <rect x="112" y="100" width="288" height="312" rx="48" fill="#FFFFFF" opacity="0.96" />
+    
+    <!-- Blister Pocket Circles -->
+    <!-- Row 1 -->
+    <circle cx="180" cy="165" r="38" fill="#E5E5EA" />
+    <circle cx="180" cy="165" r="28" fill="#0A84FF" opacity="0.9" />
+    
+    <circle cx="332" cy="165" r="38" fill="#E5E5EA" />
+    <circle cx="332" cy="165" r="28" fill="#0A84FF" opacity="0.9" />
+    
+    <!-- Row 2 -->
+    <circle cx="180" cy="256" r="38" fill="#E5E5EA" />
+    <circle cx="180" cy="256" r="28" fill="#34C759" opacity="0.9" />
+    
+    <circle cx="332" cy="256" r="38" fill="#E5E5EA" />
+    <circle cx="332" cy="256" r="28" fill="#34C759" opacity="0.9" />
+    
+    <!-- Row 3 -->
+    <circle cx="180" cy="347" r="38" fill="#E5E5EA" />
+    <circle cx="180" cy="347" r="28" fill="#FF9F0A" opacity="0.9" />
+    
+    <circle cx="332" cy="347" r="38" fill="#F2F2F7" stroke="#D1D1D6" stroke-width="5" stroke-dasharray="8 8" />
+  </g>
+</svg>
