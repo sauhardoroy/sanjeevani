@@ -19,7 +19,7 @@ export function RollingStepper({
   const [internal, setInternal] = useState(defaultValue);
   const [direction, setDirection] = useState(1);
 
-  const current = Number(isControlled ? value : internal) ?? 0;
+  const current = Number(isControlled ? value : internal) || 0;
 
   const step = (dir) => {
     const next = Math.min(max, Math.max(min, current + dir));

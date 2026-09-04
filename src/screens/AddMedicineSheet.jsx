@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   X, 
@@ -6,15 +6,9 @@ import {
   Sunrise, 
   Sun, 
   Moon, 
-  Clock, 
-  Layers, 
-  Check, 
-  Sparkles,
-  Info,
   User
 } from 'lucide-react';
 import { RollingStepper } from '../components/content/RollingStepper';
-import { GrandmotherIcon, GrandfatherIcon } from '../components/icons/GrandparentIcons';
 
 const SPRING_CONFIG = {
   type: 'spring',
@@ -30,7 +24,7 @@ const TAB_SPRING = {
 };
 
 /**
- * AddMedicineSheet — Completely Revamped Apple HIG Modal Dialog
+ * AddMedicineSheet — Dynamic Multi-Profile Prescription Modal Dialog
  * Features 3D rolling steppers, Apple toggle switches, sliding segmented pill tabs,
  * and concentric rounded geometry.
  */
@@ -38,19 +32,24 @@ export function AddMedicineSheet({
   isOpen, 
   onClose, 
   onSave, 
-  initialRecipient = 'GRANDMOTHER', 
-  settings 
+  profiles = [],
+  initialRecipient 
 }) {
-  const [recipient, setRecipient] = useState(initialRecipient);
+  const [recipient, setRecipient] = useState(() => {
+    if (initialRecipient && profiles.some(p => p.id === initialRecipient)) return initialRecipient;
+    return profiles[0]?.id || 'prof-grandmother';
+  });
   const [name, setName] = useState('');
   const [purpose, setPurpose] = useState('');
 
-  // Sync recipient with active tab
-  React.useEffect(() => {
-    if (initialRecipient) {
+  // Sync recipient with active profile
+  useEffect(() => {
+    if (initialRecipient && profiles.some(p => p.id === initialRecipient)) {
       setRecipient(initialRecipient);
+    } else if (profiles.length > 0 && !profiles.some(p => p.id === recipient)) {
+      setRecipient(profiles[0].id);
     }
-  }, [initialRecipient, isOpen]);
+  }, [initialRecipient, isOpen, profiles, recipient]);
 
   // Daily Schedule Slots (Apple Toggle Switches)
   const [slots, setSlots] = useState({
@@ -107,6 +106,7 @@ export function AddMedicineSheet({
       id: 'med-' + Date.now(),
       name: name.trim(),
       recipient,
+      profileId: recipient,
       purpose: purpose.trim(),
       schedule: {
         timeOfDay,
@@ -206,52 +206,37 @@ export function AddMedicineSheet({
                 <label className="text-[12px] font-bold text-[#8E8E93] uppercase tracking-wider block">
                   Prescription For *
                 </label>
-                <div className="flex p-1 rounded-2xl bg-[#F2F2F7] border border-[#E5E5EA]">
-                  <button
-                    type="button"
-                    onClick={() => setRecipient('GRANDMOTHER')}
-                    className={`
-                      relative flex-1 py-2 px-3 rounded-xl
-                      flex items-center justify-center gap-2
-                      text-xs font-bold transition-all focus:outline-none
-                      ${recipient === 'GRANDMOTHER' ? 'text-[#1C1C1E]' : 'text-[#8E8E93] hover:text-[#1C1C1E]'}
-                    `}
-                  >
-                    {recipient === 'GRANDMOTHER' && (
-                      <motion.div
-                        layoutId="addRecipientSegment"
-                        transition={TAB_SPRING}
-                        className="absolute inset-0 rounded-xl bg-white shadow-xs border border-[#E5E5EA]"
-                      />
-                    )}
-                    <div className="relative z-10 flex h-6 w-6 items-center justify-center rounded-full bg-[#F2F2F7] text-[#1C1C1E]">
-                      <GrandmotherIcon size={14} />
-                    </div>
-                    <span className="relative z-10">{settings?.grandmotherName || 'Grandmother'}</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setRecipient('GRANDFATHER')}
-                    className={`
-                      relative flex-1 py-2 px-3 rounded-xl
-                      flex items-center justify-center gap-2
-                      text-xs font-bold transition-all focus:outline-none
-                      ${recipient === 'GRANDFATHER' ? 'text-[#1C1C1E]' : 'text-[#8E8E93] hover:text-[#1C1C1E]'}
-                    `}
-                  >
-                    {recipient === 'GRANDFATHER' && (
-                      <motion.div
-                        layoutId="addRecipientSegment"
-                        transition={TAB_SPRING}
-                        className="absolute inset-0 rounded-xl bg-white shadow-xs border border-[#E5E5EA]"
-                      />
-                    )}
-                    <div className="relative z-10 flex h-6 w-6 items-center justify-center rounded-full bg-[#F2F2F7] text-[#1C1C1E]">
-                      <GrandfatherIcon size={14} />
-                    </div>
-                    <span className="relative z-10">{settings?.grandfatherName || 'Grandfather'}</span>
-                  </button>
+                <div className="flex flex-wrap gap-1.5 p-1 rounded-2xl bg-[#F2F2F7] border border-[#E5E5EA]">
+                  {profiles.map((prof) => {
+                    const isSelected = recipient === prof.id;
+                    return (
+                      <button
+                        key={prof.id}
+                        type="button"
+                        onClick={() => setRecipient(prof.id)}
+                        className={`
+                          relative flex-1 min-w-[100px] py-2 px-3 rounded-xl
+                          flex items-center justify-center gap-2
+                          text-xs font-bold transition-all focus:outline-none
+                          ${isSelected ? 'text-[#1C1C1E]' : 'text-[#8E8E93] hover:text-[#1C1C1E]'}
+                        `}
+                      >
+                        {isSelected && (
+                          <motion.div
+                            layoutId="addRecipientSegment"
+                            transition={TAB_SPRING}
+                            className="absolute inset-0 rounded-xl bg-white shadow-xs border border-[#E5E5EA]"
+                          />
+                        )}
+                        <div className={`relative z-10 flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold ${
+                          isSelected ? 'bg-[#1C1C1E] text-white' : 'bg-[#E5E5EA] text-[#6E6E73]'
+                        }`}>
+                          {prof.name ? prof.name.charAt(0).toUpperCase() : <User className="w-3 h-3 text-[#6E6E73]" />}
+                        </div>
+                        <span className="relative z-10 truncate max-w-[120px]">{prof.name}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 

@@ -1,6 +1,5 @@
 import { 
   calculateDailyBurnRate, 
-  projectCurrentStock, 
   evaluateMedicineStatus, 
   reconcileAudit 
 } from './depletion.js';

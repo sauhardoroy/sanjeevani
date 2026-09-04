@@ -1,54 +1,50 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { MedicineCard } from '../components/content/MedicineCard';
+import { ProfilePagerHeader } from '../components/navigation/ProfilePagerHeader';
 import { evaluateMedicineStatus } from '../lib/depletion';
-import { PlusCircle, Heart, Check, Plus, HelpCircle } from 'lucide-react';
-import { GrandmotherIcon, GrandfatherIcon } from '../components/icons/GrandparentIcons';
+import { Check, Plus, User } from 'lucide-react';
 
 /**
- * Home Screen — Dual-Profile Dashboard (Grandmother & Grandfather)
- * Features a sleek pill dock containing two circular options with distinct
- * black & white flat icons, zero text inside the pill, and horizontal swipe navigation.
+ * Home Screen — Dynamic Multi-Profile Dashboard
+ * Features an Apple-style segmented pill dock displaying profile names with
+ * real-time critical alert pips and fluid horizontal swipe gestures to switch between people.
  */
 export function Home({ 
   medicines = [], 
   settings, 
+  profiles = [],
+  activeProfileId,
+  onSelectProfile,
   onAudit, 
   onDelete, 
   onOpenAddSheet,
   onOpenGuide
 }) {
-  const [activeProfile, setActiveProfile] = useState('GRANDMOTHER');
+  // Ensure we have at least one active profile
+  const activeProfile = useMemo(() => {
+    return profiles.find((p) => p.id === activeProfileId) || profiles[0] || { id: 'prof-default', name: 'Family' };
+  }, [profiles, activeProfileId]);
 
-  // Separate medicines by recipient
-  const { grandmaMeds, grandpaMeds } = useMemo(() => {
-    const grandma = [];
-    const grandpa = [];
-    medicines.forEach((med) => {
-      const recipient = med.recipient || (med.name?.toLowerCase().includes('metformin') ? 'GRANDMOTHER' : 'GRANDFATHER');
-      if (recipient === 'GRANDMOTHER') {
-        grandma.push(med);
-      } else {
-        grandpa.push(med);
-      }
+  const currentPersonName = activeProfile.name;
+
+  // Filter medicines strictly for active profile
+  const currentMedicines = useMemo(() => {
+    return medicines.filter((med) => {
+      const recipientId = med.recipient || med.profileId;
+      return recipientId === activeProfile.id;
     });
-    return { grandmaMeds: grandma, grandpaMeds: grandpa };
-  }, [medicines]);
+  }, [medicines, activeProfile.id]);
 
-  // Check if either profile has critical medications (for badge dots)
-  const grandmaCritical = useMemo(() => {
-    return grandmaMeds.some((m) => evaluateMedicineStatus(m).priority === 1);
-  }, [grandmaMeds]);
-
-  const grandpaCritical = useMemo(() => {
-    return grandpaMeds.some((m) => evaluateMedicineStatus(m).priority === 1);
-  }, [grandpaMeds]);
-
-  // Current active profile's medicines & name
-  const currentMedicines = activeProfile === 'GRANDMOTHER' ? grandmaMeds : grandpaMeds;
-  const currentPersonName = activeProfile === 'GRANDMOTHER' 
-    ? (settings?.grandmotherName || 'Grandmother')
-    : (settings?.grandfatherName || 'Grandfather');
+  // Check which profiles have critical refills for alert pips on tabs
+  const profileCriticalMap = useMemo(() => {
+    const map = {};
+    profiles.forEach((profile) => {
+      const pMeds = medicines.filter((m) => (m.recipient || m.profileId) === profile.id);
+      map[profile.id] = pMeds.some((m) => evaluateMedicineStatus(m).priority === 1);
+    });
+    return map;
+  }, [profiles, medicines]);
 
   // Categorize active profile's medicines into 3 sections
   const { criticalMeds, attentionMeds, allGoodMeds } = useMemo(() => {
@@ -78,168 +74,37 @@ export function Home({
     };
   }, [currentMedicines]);
 
-  // Handle swipe gestures
+  // Handle swipe gestures between profiles
+  const currentIndex = profiles.findIndex((p) => p.id === activeProfile.id);
+
   const handleDragEnd = (event, info) => {
     const swipeThreshold = 50;
-    if (info.offset.x < -swipeThreshold && activeProfile === 'GRANDMOTHER') {
-      // Swiped Left -> Switch to Grandfather
-      setActiveProfile('GRANDFATHER');
-    } else if (info.offset.x > swipeThreshold && activeProfile === 'GRANDFATHER') {
-      // Swiped Right -> Switch to Grandmother
-      setActiveProfile('GRANDMOTHER');
+    if (info.offset.x < -swipeThreshold && currentIndex < profiles.length - 1) {
+      // Swiped Left -> Next Profile
+      onSelectProfile?.(profiles[currentIndex + 1].id);
+    } else if (info.offset.x > swipeThreshold && currentIndex > 0) {
+      // Swiped Right -> Previous Profile
+      onSelectProfile?.(profiles[currentIndex - 1].id);
     }
   };
 
   return (
     <div className="min-h-screen bg-[#F2F2F7] flex flex-col pb-28">
       {/* ------------------------------------------------------------------ */}
-      {/* Top Floating Control Bar (Two Circles Inside a Pill + Help Button) */}
+      {/* Top Profile Pager Bar: Animated Name, Chevrons, Numbered Capsule   */}
       {/* ------------------------------------------------------------------ */}
-      <div className="max-w-lg mx-auto w-full px-4 pt-4 pb-2 flex items-center justify-between select-none">
-        {/* Invisible left balance spacer */}
-        <div className="w-9 h-9" />
-
-        {/* Center: Two Circles Inside a Pill */}
-        <div className="flex flex-col items-center justify-center">
-          <div className="relative flex items-center gap-1 rounded-full border-[1.6px] border-[#E5E5EA] bg-white/95 backdrop-blur-3xl p-1 shadow-xs">
-          
-          {/* Circle Option 1: Grandmother */}
-          <button
-            type="button"
-            onClick={() => setActiveProfile('GRANDMOTHER')}
-            aria-label={settings?.grandmotherName || 'Grandmother'}
-            title={settings?.grandmotherName || 'Grandmother'}
-            className="group relative h-10 w-10 rounded-full flex items-center justify-center outline-none transition-colors focus:outline-none"
-          >
-            {activeProfile === 'GRANDMOTHER' && (
-              <motion.div
-                layoutId="active-grandparent-circle"
-                transition={{
-                  type: 'spring',
-                  stiffness: 280,
-                  damping: 25,
-                  mass: 0.8,
-                }}
-                className="absolute inset-0 rounded-full bg-[#1C1C1E] shadow-xs"
-              />
-            )}
-
-            <motion.div
-              transition={{ duration: 0.3, ease: 'easeOut' }}
-              animate={{
-                filter: activeProfile === 'GRANDMOTHER'
-                  ? ['blur(0px)', 'blur(4px)', 'blur(0px)']
-                  : 'blur(0px)',
-              }}
-              className="relative z-10 flex items-center justify-center"
-            >
-              <motion.div
-                animate={{ scale: activeProfile === 'GRANDMOTHER' ? 1.05 : 1 }}
-                transition={{ scale: { type: 'spring', stiffness: 300, damping: 15 } }}
-                className="flex items-center justify-center"
-              >
-                <GrandmotherIcon 
-                  size={20} 
-                  className={`transition-colors duration-200 ${
-                    activeProfile === 'GRANDMOTHER' 
-                      ? 'text-white' 
-                      : 'text-[#8E8E93] group-hover:text-[#1C1C1E]'
-                  }`} 
-                />
-              </motion.div>
-            </motion.div>
-
-            {/* Critical Alert Pip on Circle */}
-            {grandmaCritical && (
-              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#FF3B30] ring-2 ring-white z-20" />
-            )}
-          </button>
-
-          {/* Circle Option 2: Grandfather */}
-          <button
-            type="button"
-            onClick={() => setActiveProfile('GRANDFATHER')}
-            aria-label={settings?.grandfatherName || 'Grandfather'}
-            title={settings?.grandfatherName || 'Grandfather'}
-            className="group relative h-10 w-10 rounded-full flex items-center justify-center outline-none transition-colors focus:outline-none"
-          >
-            {activeProfile === 'GRANDFATHER' && (
-              <motion.div
-                layoutId="active-grandparent-circle"
-                transition={{
-                  type: 'spring',
-                  stiffness: 280,
-                  damping: 25,
-                  mass: 0.8,
-                }}
-                className="absolute inset-0 rounded-full bg-[#1C1C1E] shadow-xs"
-              />
-            )}
-
-            <motion.div
-              transition={{ duration: 0.3, ease: 'easeOut' }}
-              animate={{
-                filter: activeProfile === 'GRANDFATHER'
-                  ? ['blur(0px)', 'blur(4px)', 'blur(0px)']
-                  : 'blur(0px)',
-              }}
-              className="relative z-10 flex items-center justify-center"
-            >
-              <motion.div
-                animate={{ scale: activeProfile === 'GRANDFATHER' ? 1.05 : 1 }}
-                transition={{ scale: { type: 'spring', stiffness: 300, damping: 15 } }}
-                className="flex items-center justify-center"
-              >
-                <GrandfatherIcon 
-                  size={20} 
-                  className={`transition-colors duration-200 ${
-                    activeProfile === 'GRANDFATHER' 
-                      ? 'text-white' 
-                      : 'text-[#8E8E93] group-hover:text-[#1C1C1E]'
-                  }`} 
-                />
-              </motion.div>
-            </motion.div>
-
-            {/* Critical Alert Pip on Circle */}
-            {grandpaCritical && (
-              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#FF3B30] ring-2 ring-white z-20" />
-            )}
-          </button>
-        </div>
-
-        {/* Quiet Sub-label Indicating Current Profile & Swipe Gesture */}
-        <div className="flex items-center gap-2 pt-1.5 text-[11.5px] font-semibold text-[#8E8E93]">
-          <span className="text-[#1C1C1E]">{currentPersonName}</span>
-          <span>•</span>
-          <span className="font-normal">{currentMedicines.length} meds</span>
-          <span>•</span>
-          <span className="font-normal">Swipe to switch</span>
-        </div>
-      </div>
-
-      {/* Right: Help Button */}
-      {onOpenGuide ? (
-        <button
-          type="button"
-          onClick={onOpenGuide}
-          aria-label="App Guide"
-          title="How to use Sanjeevani"
-          className="
-            h-9 w-9 flex items-center justify-center rounded-full
-            bg-white hover:bg-[#F2F2F7] text-[#1C1C1E]
-            border border-[#E5E5EA] shadow-xs active:scale-92 transition-all
-          "
-        >
-          <HelpCircle size={17} strokeWidth={2.2} />
-        </button>
-      ) : (
-        <div className="w-9 h-9" />
-      )}
-    </div>
+      <ProfilePagerHeader
+        profiles={profiles}
+        activeProfile={activeProfile}
+        onSelectProfile={onSelectProfile}
+        badgeText={`${currentMedicines.length} meds`}
+        profileCriticalMap={profileCriticalMap}
+        onOpenGuide={onOpenGuide}
+        layoutId="home-active-profile-step"
+      />
 
       {/* ------------------------------------------------------------------ */}
-      {/* Swipeable Screen Container (Framer Motion Drag & Transitions) */}
+      {/* Swipeable Screen Container (Framer Motion Drag & Transitions)      */}
       {/* ------------------------------------------------------------------ */}
       <motion.main
         drag="x"
@@ -250,17 +115,17 @@ export function Home({
       >
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
-            key={activeProfile}
-            initial={{ opacity: 0, x: activeProfile === 'GRANDFATHER' ? 40 : -40 }}
+            key={activeProfile.id}
+            initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: activeProfile === 'GRANDFATHER' ? -40 : 40 }}
+            exit={{ opacity: 0, x: -20 }}
             transition={{ type: 'spring', stiffness: 360, damping: 30 }}
             className="flex flex-col gap-6 w-full"
           >
             {currentMedicines.length > 0 ? (
               <>
                 {/* -------------------------------------------------------- */}
-                {/* Section 1: Critical */}
+                {/* Section 1: Critical                                      */}
                 {/* -------------------------------------------------------- */}
                 <section className="flex flex-col gap-3">
                   <div className="flex items-center justify-between px-1">
@@ -286,6 +151,7 @@ export function Home({
                           key={med.id}
                           medicine={med}
                           settings={settings}
+                          profiles={profiles}
                           onAudit={onAudit}
                           onDelete={onDelete}
                         />
@@ -300,7 +166,7 @@ export function Home({
                 </section>
 
                 {/* -------------------------------------------------------- */}
-                {/* Section 2: Attention Required */}
+                {/* Section 2: Attention Required                            */}
                 {/* -------------------------------------------------------- */}
                 <section className="flex flex-col gap-3">
                   <div className="flex items-center justify-between px-1">
@@ -326,6 +192,7 @@ export function Home({
                           key={med.id}
                           medicine={med}
                           settings={settings}
+                          profiles={profiles}
                           onAudit={onAudit}
                           onDelete={onDelete}
                         />
@@ -340,7 +207,7 @@ export function Home({
                 </section>
 
                 {/* -------------------------------------------------------- */}
-                {/* Section 3: All Good */}
+                {/* Section 3: All Good                                      */}
                 {/* -------------------------------------------------------- */}
                 <section className="flex flex-col gap-3">
                   <div className="flex items-center justify-between px-1">
@@ -366,6 +233,7 @@ export function Home({
                           key={med.id}
                           medicine={med}
                           settings={settings}
+                          profiles={profiles}
                           onAudit={onAudit}
                           onDelete={onDelete}
                         />
@@ -379,14 +247,10 @@ export function Home({
                 </section>
               </>
             ) : (
-              /* Empty State for This Person */
+              /* Empty State for This Profile */
               <div className="mt-8 flex flex-col items-center text-center p-8 bg-white rounded-3xl border border-[#E5E5EA] shadow-xs">
                 <div className="w-14 h-14 rounded-full bg-[#F2F2F7] flex items-center justify-center text-[#1C1C1E] mb-4">
-                  {activeProfile === 'GRANDMOTHER' ? (
-                    <GrandmotherIcon size={28} />
-                  ) : (
-                    <GrandfatherIcon size={28} />
-                  )}
+                  <User size={28} strokeWidth={2.2} />
                 </div>
                 <h3 className="text-[19px] font-bold text-[#1C1C1E] mb-1">
                   No Medicines for {currentPersonName}
@@ -396,7 +260,7 @@ export function Home({
                 </p>
                 <button
                   type="button"
-                  onClick={() => onOpenAddSheet?.(activeProfile)}
+                  onClick={() => onOpenAddSheet?.(activeProfile.id)}
                   className="px-5 py-2.5 rounded-full bg-[#1C1C1E] text-white text-xs font-bold shadow-xs hover:bg-black transition-colors flex items-center gap-1.5"
                 >
                   <Plus size={14} />

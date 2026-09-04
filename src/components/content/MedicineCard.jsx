@@ -2,18 +2,14 @@ import React, { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   AlertCircle,
-  CalendarDays,
   Check,
   CheckCircle2,
   ChevronDown,
-  Layers3,
   MessageCircle,
   Pill,
-  ShieldCheck,
   Trash2,
   Edit3,
-  Plus,
-  Layers
+  Plus
 } from 'lucide-react';
 
 import { evaluateMedicineStatus } from '../../lib/depletion';
@@ -106,45 +102,46 @@ function formatCount(value) {
 export function MedicineCard({
   medicine,
   settings,
+  profiles = [],
   onAudit,
   onDelete,
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isAuditing, setIsAuditing] = useState(false);
   const [isEditingCount, setIsEditingCount] = useState(false);
+  const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState(false);
 
   const status = useMemo(() => {
     if (!medicine) return null;
     return evaluateMedicineStatus(medicine);
   }, [medicine]);
 
-  if (!medicine || !status) {
-    return null;
-  }
-
-  const theme = STATUS_THEME[status.type] || STATUS_THEME.SAFE;
-
   const tabletsPerStrip =
-    Number(medicine.stripConfig?.tabletsPerStrip) ||
-    Number(medicine.tabletsPerStrip) ||
+    Number(medicine?.stripConfig?.tabletsPerStrip) ||
+    Number(medicine?.tabletsPerStrip) ||
     10;
 
   const abandonmentBuffer =
-    Number(medicine.stripConfig?.abandonmentBuffer) ||
+    Number(medicine?.stripConfig?.abandonmentBuffer) ||
     Number(settings?.abandonmentBuffer) ||
     3;
 
-  const pillsOnActiveStrip = Number(status.pillsOnActiveStrip) || 0;
-  const fullStripsRemaining = Number(status.fullStripsRemaining) || 0;
-  const openStrips = status.openStripsRemaining || [pillsOnActiveStrip];
-  const safeDays = Number(status.safeDays) || 0;
-  const abandonmentRisk = status.type === 'ABANDONMENT_RISK';
-  const critical = status.type === 'REFILL_NOW';
+  const pillsOnActiveStrip = Number(status?.pillsOnActiveStrip) || 0;
+  const fullStripsRemaining = Number(status?.fullStripsRemaining) || 0;
+  const openStrips = status?.openStripsRemaining || [pillsOnActiveStrip];
+  const safeDays = Number(status?.safeDays) || 0;
+  const critical = status?.type === 'REFILL_NOW';
   const hasMultipleOpen = openStrips.length > 1;
 
   // Local state for Count Adjustment Mode
   const [editOpenStrips, setEditOpenStrips] = useState([...openStrips]);
   const [editFullStrips, setEditFullStrips] = useState(fullStripsRemaining);
+
+  if (!medicine || !status) {
+    return null;
+  }
+
+  const theme = STATUS_THEME[status.type] || STATUS_THEME.SAFE;
 
   const startEditing = (e) => {
     if (e) e.stopPropagation();
@@ -193,8 +190,6 @@ export function MedicineCard({
       setIsAuditing(false);
     }
   };
-
-  const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState(false);
 
   const handleWhatsApp = (e) => {
     if (e) e.stopPropagation();
@@ -678,6 +673,7 @@ export function MedicineCard({
       medicine={medicine}
       status={status}
       settings={settings}
+      profiles={profiles}
     />
   </>
   );

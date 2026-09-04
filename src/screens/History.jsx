@@ -1,44 +1,49 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   CheckCircle2, 
   AlertTriangle, 
   Clock, 
-  Edit3, 
-  FileText 
+  Edit3,
+  User 
 } from 'lucide-react';
-import { GrandmotherIcon, GrandfatherIcon } from '../components/icons/GrandparentIcons';
+import { ProfilePagerHeader } from '../components/navigation/ProfilePagerHeader';
+import { evaluateMedicineStatus } from '../lib/depletion';
 
 /**
- * History Screen — Dual-Profile Verification Logs
- * Grouped separately by Grandmother and Grandfather with two circles inside a pill
- * and fluid horizontal swipe gestures.
+ * History Screen — Dynamic Multi-Profile Verification Logs
+ * Filtered by tracked profile with fluid horizontal swipe gestures and profile name tabs.
  */
-export function History({ auditLogs = [], settings }) {
-  const [activeProfile, setActiveProfile] = useState('GRANDMOTHER');
+export function History({ 
+  auditLogs = [], 
+  medicines = [],
+  profiles = [], 
+  activeProfileId, 
+  onSelectProfile,
+  onOpenGuide 
+}) {
+  const activeProfile = useMemo(() => {
+    return profiles.find((p) => p.id === activeProfileId) || profiles[0] || { id: 'prof-default', name: 'Family' };
+  }, [profiles, activeProfileId]);
 
-  // Separate audit logs by recipient
-  const { grandmaLogs, grandpaLogs } = useMemo(() => {
-    const grandma = [];
-    const grandpa = [];
-
-    auditLogs.forEach((log) => {
-      const recipient = log.recipient || (log.medicineName?.toLowerCase().includes('metformin') ? 'GRANDMOTHER' : 'GRANDFATHER');
-      if (recipient === 'GRANDMOTHER') {
-        grandma.push(log);
-      } else {
-        grandpa.push(log);
-      }
+  // Check which profiles have critical refills for alert pips on tabs
+  const profileCriticalMap = useMemo(() => {
+    const map = {};
+    profiles.forEach((profile) => {
+      const pMeds = medicines.filter((m) => (m.recipient || m.profileId) === profile.id);
+      map[profile.id] = pMeds.some((m) => evaluateMedicineStatus(m).priority === 1);
     });
+    return map;
+  }, [profiles, medicines]);
 
-    return { grandmaLogs: grandma, grandpaLogs: grandpa };
-  }, [auditLogs]);
+  const currentPersonName = activeProfile.name;
 
-  const currentPersonName = activeProfile === 'GRANDMOTHER'
-    ? (settings?.grandmotherName || 'Grandmother')
-    : (settings?.grandfatherName || 'Grandfather');
-
-  const currentLogs = activeProfile === 'GRANDMOTHER' ? grandmaLogs : grandpaLogs;
+  // Filter logs strictly for active profile
+  const currentLogs = useMemo(() => {
+    return auditLogs.filter((log) => {
+      return log.recipient === activeProfile.id;
+    });
+  }, [auditLogs, activeProfile.id]);
 
   const formatDate = (isoString) => {
     if (!isoString) return 'Recent';
@@ -61,7 +66,7 @@ export function History({ auditLogs = [], settings }) {
     });
   };
 
-  // Compute stats for the active grandparent
+  // Compute stats for the active profile
   const { matchedCount, anomaliesCount } = useMemo(() => {
     let matched = 0;
     let anomalies = 0;
@@ -72,129 +77,35 @@ export function History({ auditLogs = [], settings }) {
     return { matchedCount: matched, anomaliesCount: anomalies };
   }, [currentLogs]);
 
-  // Handle swipe gestures
+  // Handle swipe gestures between profiles
+  const currentIndex = profiles.findIndex((p) => p.id === activeProfile.id);
+
   const handleDragEnd = (_, info) => {
     const swipeThreshold = 50;
-    if (info.offset.x < -swipeThreshold && activeProfile === 'GRANDMOTHER') {
-      setActiveProfile('GRANDFATHER');
-    } else if (info.offset.x > swipeThreshold && activeProfile === 'GRANDFATHER') {
-      setActiveProfile('GRANDMOTHER');
+    if (info.offset.x < -swipeThreshold && currentIndex < profiles.length - 1) {
+      onSelectProfile?.(profiles[currentIndex + 1].id);
+    } else if (info.offset.x > swipeThreshold && currentIndex > 0) {
+      onSelectProfile?.(profiles[currentIndex - 1].id);
     }
   };
 
   return (
     <div className="min-h-screen bg-[#F2F2F7] flex flex-col pb-28">
       {/* ------------------------------------------------------------------ */}
-      {/* Two Circles Inside a Pill (Grandmother & Grandfather) */}
+      {/* Top Profile Pager Bar: Animated Name, Chevrons, Numbered Capsule   */}
       {/* ------------------------------------------------------------------ */}
-      <div className="mx-auto w-fit flex flex-col items-center justify-center pt-4 pb-2 select-none">
-        <div className="relative flex items-center gap-1 rounded-full border-[1.6px] border-[#E5E5EA] bg-white/95 backdrop-blur-3xl p-1 shadow-xs">
-          
-          {/* Circle Option 1: Grandmother */}
-          <button
-            type="button"
-            onClick={() => setActiveProfile('GRANDMOTHER')}
-            aria-label={settings?.grandmotherName || 'Grandmother'}
-            title={settings?.grandmotherName || 'Grandmother'}
-            className="group relative h-10 w-10 rounded-full flex items-center justify-center outline-none transition-colors focus:outline-none"
-          >
-            {activeProfile === 'GRANDMOTHER' && (
-              <motion.div
-                layoutId="active-history-circle"
-                transition={{
-                  type: 'spring',
-                  stiffness: 280,
-                  damping: 25,
-                  mass: 0.8,
-                }}
-                className="absolute inset-0 rounded-full bg-[#1C1C1E] shadow-xs"
-              />
-            )}
-
-            <motion.div
-              transition={{ duration: 0.3, ease: 'easeOut' }}
-              animate={{
-                filter: activeProfile === 'GRANDMOTHER'
-                  ? ['blur(0px)', 'blur(4px)', 'blur(0px)']
-                  : 'blur(0px)',
-              }}
-              className="relative z-10 flex items-center justify-center"
-            >
-              <motion.div
-                animate={{ scale: activeProfile === 'GRANDMOTHER' ? 1.05 : 1 }}
-                transition={{ scale: { type: 'spring', stiffness: 300, damping: 15 } }}
-                className="flex items-center justify-center"
-              >
-                <GrandmotherIcon 
-                  size={20} 
-                  className={`transition-colors duration-200 ${
-                    activeProfile === 'GRANDMOTHER' 
-                      ? 'text-white' 
-                      : 'text-[#8E8E93] group-hover:text-[#1C1C1E]'
-                  }`} 
-                />
-              </motion.div>
-            </motion.div>
-          </button>
-
-          {/* Circle Option 2: Grandfather */}
-          <button
-            type="button"
-            onClick={() => setActiveProfile('GRANDFATHER')}
-            aria-label={settings?.grandfatherName || 'Grandfather'}
-            title={settings?.grandfatherName || 'Grandfather'}
-            className="group relative h-10 w-10 rounded-full flex items-center justify-center outline-none transition-colors focus:outline-none"
-          >
-            {activeProfile === 'GRANDFATHER' && (
-              <motion.div
-                layoutId="active-history-circle"
-                transition={{
-                  type: 'spring',
-                  stiffness: 280,
-                  damping: 25,
-                  mass: 0.8,
-                }}
-                className="absolute inset-0 rounded-full bg-[#1C1C1E] shadow-xs"
-              />
-            )}
-
-            <motion.div
-              transition={{ duration: 0.3, ease: 'easeOut' }}
-              animate={{
-                filter: activeProfile === 'GRANDFATHER'
-                  ? ['blur(0px)', 'blur(4px)', 'blur(0px)']
-                  : 'blur(0px)',
-              }}
-              className="relative z-10 flex items-center justify-center"
-            >
-              <motion.div
-                animate={{ scale: activeProfile === 'GRANDFATHER' ? 1.05 : 1 }}
-                transition={{ scale: { type: 'spring', stiffness: 300, damping: 15 } }}
-                className="flex items-center justify-center"
-              >
-                <GrandfatherIcon 
-                  size={20} 
-                  className={`transition-colors duration-200 ${
-                    activeProfile === 'GRANDFATHER' 
-                      ? 'text-white' 
-                      : 'text-[#8E8E93] group-hover:text-[#1C1C1E]'
-                  }`} 
-                />
-              </motion.div>
-            </motion.div>
-          </button>
-        </div>
-
-        {/* Quiet Sub-label Indicating Current Profile & Swipe Gesture */}
-        <div className="flex items-center gap-2 pt-1.5 text-[11.5px] font-semibold text-[#8E8E93]">
-          <span className="text-[#1C1C1E]">{currentPersonName}</span>
-          <span>•</span>
-          <span className="font-normal">Swipe to switch</span>
-        </div>
-      </div>
+      <ProfilePagerHeader
+        profiles={profiles}
+        activeProfile={activeProfile}
+        onSelectProfile={onSelectProfile}
+        badgeText={`${currentLogs.length} logs`}
+        profileCriticalMap={profileCriticalMap}
+        onOpenGuide={onOpenGuide}
+        layoutId="history-active-profile-step"
+      />
 
       {/* ------------------------------------------------------------------ */}
-      {/* Swipeable Screen Content */}
+      {/* Swipeable Screen Content                                           */}
       {/* ------------------------------------------------------------------ */}
       <motion.main
         drag="x"
@@ -205,14 +116,14 @@ export function History({ auditLogs = [], settings }) {
       >
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
-            key={activeProfile}
-            initial={{ opacity: 0, x: activeProfile === 'GRANDFATHER' ? 40 : -40 }}
+            key={activeProfile.id}
+            initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: activeProfile === 'GRANDFATHER' ? -40 : 40 }}
+            exit={{ opacity: 0, x: -20 }}
             transition={{ type: 'spring', stiffness: 360, damping: 30 }}
             className="flex flex-col gap-5 w-full"
           >
-            {/* 1. Apple 3-Column Metric Pod for Current Grandparent */}
+            {/* 1. Apple 3-Column Metric Pod for Current Profile */}
             <div className="rounded-[26px] border border-[#E5E5EA] bg-white p-4 shadow-xs">
               <div className="grid grid-cols-3 divide-x divide-[#E5E5EA] text-center">
                 <div className="px-2">
@@ -328,20 +239,16 @@ export function History({ auditLogs = [], settings }) {
                 })}
               </div>
             ) : (
-              /* Empty State for this Grandparent */
+              /* Empty State for this Profile */
               <div className="mt-8 flex flex-col items-center text-center p-8 bg-white rounded-3xl border border-[#E5E5EA] shadow-xs">
                 <div className="w-14 h-14 rounded-full bg-[#F2F2F7] flex items-center justify-center text-[#1C1C1E] mb-3">
-                  {activeProfile === 'GRANDMOTHER' ? (
-                    <GrandmotherIcon size={28} />
-                  ) : (
-                    <GrandfatherIcon size={28} />
-                  )}
+                  <User size={28} strokeWidth={2.2} />
                 </div>
                 <h3 className="text-[18px] font-bold text-[#1C1C1E] mb-1">
                   No Audit Logs for {currentPersonName}
                 </h3>
                 <p className="text-[13.5px] text-[#6E6E73] max-w-xs leading-relaxed">
-                  When you visit {currentPersonName} and verify physical pill counts, logs will appear here.
+                  When you visit {currentPersonName} and verify physical pill counts, records will appear here.
                 </p>
               </div>
             )}

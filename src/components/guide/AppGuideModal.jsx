@@ -34,20 +34,20 @@ const GUIDE_CARDS = [
   {
     id: 1,
     step: 1,
-    badge: 'Dual Profiles',
-    title: 'Separate Care for Mom & Dad',
+    badge: 'Multi-Profile',
+    title: 'Track Multiple People',
     icon: Users,
     instructions: [
       {
-        label: 'Top Circle Icons',
-        text: 'Tap the Left Circle for Grandmother, Right Circle for Grandfather at the top of your screen.',
+        label: 'Top Profile Tabs',
+        text: 'Tap any person\'s name pill at the top of your screen to view their schedule & stock.',
       },
       {
         label: 'Or Just Swipe',
-        text: 'Swipe left or right anywhere across the screen like flipping book pages to switch.',
+        text: 'Swipe left or right anywhere across the screen to quickly switch between family members.',
       },
     ],
-    scenario: 'Grandmother takes diabetes medication while Grandfather takes BP tablets. Having separate screens ensures you never order or count the wrong person\'s medicine.',
+    scenario: 'Track Grandmother, Grandfather, parents, or any relative individually. Adding profiles in Settings gives each person their own medication vault and WhatsApp reminders.',
     cta: 'Next: Refill Status',
   },
   {
@@ -100,12 +100,12 @@ const GUIDE_CARDS = [
     icon: PlusCircle,
     instructions: [
       {
-        label: 'Floating (+) Button',
-        text: 'Tap the circular (+) button at the bottom right corner of the home screen.',
+        label: 'Navigation (+) Button',
+        text: 'Tap the prominent (+) button in the center of the bottom navigation bar.',
       },
       {
         label: 'Select Profile',
-        text: 'Choose whether the prescription is for Grandmother or Grandfather.',
+        text: 'Choose which family member\'s prescription you are adding.',
       },
       {
         label: 'Set Dose & Packs',

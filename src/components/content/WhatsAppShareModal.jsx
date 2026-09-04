@@ -4,8 +4,7 @@ import {
   X, 
   MessageCircle, 
   Phone, 
-  Send,
-  RotateCcw
+  Send
 } from 'lucide-react';
 import { buildReminderMessage, getCustomWhatsAppUrl } from '../../lib/whatsapp';
 
@@ -26,22 +25,28 @@ export function WhatsAppShareModal({
   medicine,
   status,
   settings,
+  profiles = [],
 }) {
+  const profile = Array.isArray(profiles) 
+    ? profiles.find(p => p.id === medicine?.recipient || p.id === medicine?.profileId)
+    : null;
+  const defaultPhone = profile?.phone || settings?.grandparentsPhone || '';
+
   const [customText, setCustomText] = useState('');
-  const [phone, setPhone] = useState(settings?.grandparentsPhone || '');
+  const [phone, setPhone] = useState(defaultPhone);
 
   // Initialize with a friendly customizable draft when opening
   useEffect(() => {
     if (medicine && isOpen) {
-      setCustomText(buildReminderMessage(medicine, status, settings));
-      setPhone(settings?.grandparentsPhone || '');
+      setCustomText(buildReminderMessage(medicine, status, settings, 'DEFAULT', profiles));
+      setPhone(defaultPhone);
     }
-  }, [medicine, status, settings, isOpen]);
+  }, [medicine, status, settings, isOpen, defaultPhone, profiles]);
 
   if (!isOpen || !medicine) return null;
 
   const handleResetToSummary = () => {
-    setCustomText(buildReminderMessage(medicine, status, settings));
+    setCustomText(buildReminderMessage(medicine, status, settings, 'DEFAULT', profiles));
   };
 
   const handleClear = () => {
@@ -57,9 +62,7 @@ export function WhatsAppShareModal({
     onClose();
   };
 
-  const recipientLabel = medicine.recipient === 'GRANDFATHER'
-    ? (settings?.grandfatherName || 'Grandfather')
-    : (settings?.grandmotherName || 'Grandmother');
+  const recipientLabel = profile?.name || 'Family Member';
 
   return (
     <AnimatePresence>

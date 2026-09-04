@@ -14,11 +14,17 @@ export function cleanPhoneNumber(phone = '') {
 /**
  * Builds a contextual reminder message based on medicine status and preset type
  */
-export function buildReminderMessage(medicine, status, settings, preset = 'DEFAULT') {
-  const personName = medicine?.recipient === 'GRANDFATHER'
-    ? (settings?.grandfatherName || 'Grandfather')
-    : (settings?.grandmotherName || 'Grandmother');
-  const familyName = settings?.grandparentsName || 'Mom & Dad';
+export function buildReminderMessage(medicine, status, settings, preset = 'DEFAULT', profiles = []) {
+  const profile = Array.isArray(profiles) 
+    ? profiles.find(p => p.id === medicine?.recipient || p.id === medicine?.profileId)
+    : null;
+  const personName = profile?.name 
+    || (medicine?.recipient === 'prof-grandfather' || medicine?.recipient === 'GRANDFATHER' 
+      ? 'Grandfather' 
+      : medicine?.recipient === 'prof-grandmother' || medicine?.recipient === 'GRANDMOTHER' 
+      ? 'Grandmother' 
+      : 'Family Member');
+  const familyName = settings?.grandparentsName || 'Family';
   const medName = medicine?.name || 'medicine';
   const safeDays = status?.safeDays ?? 0;
   const fullStrips = medicine?.stock?.fullStripsDelivered ?? 0;
@@ -55,8 +61,11 @@ export function getCustomWhatsAppUrl(phone = '', message = '') {
 /**
  * Generates the default WhatsApp deep link
  */
-export function getWhatsAppUrl(medicine, status, settings) {
-  const phone = settings?.grandparentsPhone || '';
-  const message = buildReminderMessage(medicine, status, settings);
+export function getWhatsAppUrl(medicine, status, settings, profiles = []) {
+  const profile = Array.isArray(profiles) 
+    ? profiles.find(p => p.id === medicine?.recipient || p.id === medicine?.profileId)
+    : null;
+  const phone = profile?.phone || settings?.grandparentsPhone || '';
+  const message = buildReminderMessage(medicine, status, settings, 'DEFAULT', profiles);
   return getCustomWhatsAppUrl(phone, message);
 }
